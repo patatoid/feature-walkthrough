@@ -59,7 +59,7 @@
             </div>
           </div>
           <button class="ui fluid icon blue labeled continue button" type="submit">
-            <i class="arrow right icon"></i>
+            <i class="arrow down icon"></i>
             Continue
           </button>
         </form>
