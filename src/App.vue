@@ -256,6 +256,7 @@ export default {
       if (projectValue.trim().startsWith('[')) {
         projectValue = await new SignJWT({ nodes: JSON.parse(projectValue) })
           .setProtectedHeader({ alg: 'HS256' })
+          .setIssuedAt()
           .sign(this.projectSecret(projectKey))
       }
 
