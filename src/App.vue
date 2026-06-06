@@ -89,6 +89,26 @@
         accept="application/json,.json"
         @change="importProject"
       >
+
+      <div class="ui right aligned large basic home-help segment">
+        <h2 class="header">How to use Feature walkthrough</h2>
+        <div class="ui left aligned blue segment">
+          <h3>Create or import a project</h3>
+          <p>Create a local project key, or import a JSON export. Each project is stored separately in localStorage.</p>
+        </div>
+        <div class="ui left aligned blue segment">
+          <h3>Edit the current feature</h3>
+          <p>Open a project and write the feature description in the textarea. Changes are saved automatically as you type.</p>
+        </div>
+        <div class="ui left aligned blue segment">
+          <h3>Move through the tree</h3>
+          <p>Use parent, sibling, and child controls to move through the feature tree. Continue creates a child feature from the current node.</p>
+        </div>
+        <div class="ui left aligned blue segment">
+          <h3>Use AI suggestions</h3>
+          <p>Enter an OpenAI API key and click Use key. Suggestions then appear in projects and can fill the current node.</p>
+        </div>
+      </div>
     </div>
 
     <FeatureWalkthrough
@@ -97,6 +117,12 @@
       :storage-key="selectedProjectKey"
       :openai-api-key="openaiApiKey"
     />
+
+    <footer class="app-footer">
+      <span>Feature walkthrough</span>
+      <span>patatoid</span>
+      <a href="https://github.com/patatoid/feature-walkthrough" target="_blank" rel="noopener noreferrer">source code</a>
+    </footer>
   </div>
 </template>
 
@@ -342,8 +368,33 @@ export default {
   .app-header .red.button {
     margin-left: auto;
   }
+  .app-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    padding: 2rem 1rem;
+    color: #616161;
+    font-size: 0.95rem;
+  }
+  .app-footer a {
+    color: #2185d0;
+  }
+  .app-footer > * + *::before {
+    content: "·";
+    color: #9e9e9e;
+    margin-right: 0.75rem;
+  }
   .home {
     padding: 1rem;
+  }
+  .home-help {
+    h2, h3 {
+      color: #2185d0;
+    }
+    p {
+      color: #616161;
+    }
   }
   .api-key-form {
     margin-bottom: 1rem;
