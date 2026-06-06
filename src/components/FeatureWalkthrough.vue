@@ -188,6 +188,7 @@ export default {
       this.tree.store()
     },
     deleteNode (node) {
+      if (this.tree.contains(node, this.currentNode)) this.currentNode = node.parent || this.tree.root
       this.tree.destroy(node)
     },
     deleteCurrentNode () {
@@ -236,17 +237,16 @@ class Tree {
   }
 
   store () {
-    this.pruneEmptyNodes()
-    Storage.store(this.storageKey, JSON.stringify(this.nodes))
+    Storage.store(this.storageKey, JSON.stringify(this.storableNodes()))
   }
 
   isEmpty (node) {
     return !node.text || !node.text.trim()
   }
 
-  pruneEmptyNodes () {
-    this.nodes.slice().forEach(node => {
-      if (node !== this.root && this.isEmpty(node)) this.destroy(node, false)
+  storableNodes () {
+    return this.nodes.filter(node => {
+      return node === this.root || !this.isEmpty(node) || this.children(node).length
     })
   }
 
@@ -300,6 +300,16 @@ class Tree {
     })
 
     return children
+  }
+
+  contains (parent, node) {
+    let current = node
+    while (current) {
+      if (current === parent) return true
+      current = current.parent
+    }
+
+    return false
   }
 
   goto (node) {
