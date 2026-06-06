@@ -354,6 +354,13 @@ export default {
 </script>
 
 <style>
+  html, body, #app {
+    min-height: 100vh;
+  }
+  #app {
+    display: flex;
+    flex-direction: column;
+  }
   .app-header {
     display: flex;
     align-items: center;
@@ -373,6 +380,7 @@ export default {
     flex-wrap: wrap;
     gap: 0.75rem;
     justify-content: center;
+    margin-top: auto;
     padding: 2rem 1rem;
     color: #616161;
     font-size: 0.95rem;
