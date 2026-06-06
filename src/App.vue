@@ -108,6 +108,7 @@ const DEFAULT_PROJECT_KEY = 'nodes'
 const OPENAI_API_KEY_STORAGE_KEY = 'openaiApiKey'
 const API_KEY_INACTIVITY_TIMEOUT = 30 * 60 * 1000
 const ACTIVITY_EVENTS = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart']
+const BASE_PATH = process.env.BASE_URL || '/'
 
 export default {
   name: 'App',
@@ -196,13 +197,16 @@ export default {
       }, API_KEY_INACTIVITY_TIMEOUT)
     },
     projectPath (projectKey) {
-      return `/${encodeURIComponent(projectKey)}`
+      return `${BASE_PATH}${encodeURIComponent(projectKey)}`
     },
     projectKeyFromPath () {
-      const path = window.location.pathname.replace(/^\/+|\/+$/g, '')
-      if (!path) return null
+      const path = window.location.pathname
+      const basePath = BASE_PATH.replace(/\/$/, '')
+      const projectPath = path.startsWith(basePath) ? path.slice(basePath.length) : path
+      const key = projectPath.replace(/^\/+|\/+$/g, '')
+      if (!key) return null
 
-      return decodeURIComponent(path)
+      return decodeURIComponent(key)
     },
     ensureProjectListed (projectKey) {
       if (this.projects.includes(projectKey)) return
@@ -310,7 +314,7 @@ export default {
     goHome () {
       this.selectedProjectKey = null
       this.projects = this.loadProjects()
-      window.history.pushState({}, '', '/')
+      window.history.pushState({}, '', BASE_PATH)
     },
     deleteProject (projectKey) {
       if (!window.confirm(`Delete project "${projectKey}" from localStorage?`)) return
