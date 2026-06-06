@@ -282,6 +282,8 @@ export default {
         try {
           const projectValue = reader.result
           await jwtVerify(projectValue, this.projectSecret(projectKey))
+          if (localStorage.getItem(projectKey) && !window.confirm(`Overwrite existing project "${projectKey}"?`)) return
+
           localStorage.setItem(projectKey, projectValue)
           this.ensureProjectListed(projectKey)
           this.newProjectKey = ''

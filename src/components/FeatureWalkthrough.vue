@@ -66,7 +66,12 @@
       </div>
       <div class="four wide column sibling-column">
         <div class="ui segment siblings-panel">
-          <h4 class="ui dividing header">Siblings</h4>
+          <div class="siblings-header">
+            <h4 class="ui header">Siblings</h4>
+            <button class="ui icon button" type="button" @click="exportCurrentNode()">
+              <i class="download icon"></i>
+            </button>
+          </div>
           <div class="siblings-content">
             <div
               class="ui sibling segment"
@@ -196,6 +201,16 @@ export default {
       const node = this.currentNode
       this.currentNode = node.parent
       await this.tree.destroy(node)
+    },
+    async exportCurrentNode () {
+      const token = await this.tree.exportNode(this.currentNode)
+      const filename = `${this.storageKey}-${this.currentNode.text || 'untitled-node'}.jwt`
+      const blob = new Blob([token], { type: 'application/jwt' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = filename.replace(/[^\w.-]+/g, '-')
+      link.click()
+      URL.revokeObjectURL(link.href)
     }
   }
 }
@@ -254,6 +269,18 @@ class Tree {
     return this.nodes.filter(node => {
       return node === this.root || !this.isEmpty(node) || this.children(node).length
     })
+  }
+
+  exportableNodes (rootNode) {
+    return this.storableNodes().filter(node => this.contains(rootNode, node)).map(node => {
+      if (node !== rootNode) return node
+
+      return new Node(null, node.text)
+    })
+  }
+
+  async exportNode (node) {
+    return this.storage.sign(this.exportableNodes(node))
   }
 
   appendRightFrom (node) {
@@ -344,12 +371,16 @@ class Storage {
   }
 
   async store(nodes) {
-    const token = await new SignJWT({ nodes })
+    const token = await this.sign(nodes)
+
+    localStorage.setItem(this.key, token)
+  }
+
+  async sign(nodes) {
+    return new SignJWT({ nodes })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .sign(this.secret)
-
-    localStorage.setItem(this.key, token)
   }
 
   get secret() {
@@ -426,9 +457,18 @@ class Storage {
     flex-direction: column;
     overflow: hidden;
   }
-  .siblings-panel .ui.header {
+  .siblings-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
     margin-bottom: 0.85rem;
     flex: 0 0 auto;
+    border-bottom: 1px solid rgba(34, 36, 38, 0.15);
+    padding-bottom: 0.85rem;
+  }
+  .siblings-header .ui.header {
+    flex: 1 1 auto;
+    margin: 0;
   }
   .siblings-content {
     flex: 1 1 auto;
