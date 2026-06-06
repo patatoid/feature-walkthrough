@@ -10,7 +10,7 @@ It stores projects locally in the browser, lets you move through parent, sibling
 - Path-based project routes, for example `/feature-walkthrough/my-project`.
 - Parent, sibling, and child navigation.
 - Autosave on textarea keyup.
-- JSON export and import for project backup or transfer.
+- Signed JWT export and import for project backup or transfer.
 - Optional OpenAI suggestions using an API key stored in sessionStorage.
 - Session key cleanup on logout, tab unload, and 30 minutes of inactivity.
 - GitHub Pages deployment workflow.
@@ -59,9 +59,10 @@ In the repository settings, configure Pages to use `GitHub Actions` as the sourc
 
 On the home page:
 
-- Use the download button on a project row to export that project as JSON.
-- Enter a project key and click `Import` to import a JSON file into that key.
-- If the project key field is empty, import uses the selected filename without `.json`.
+- Use the download button on a project row to export that project as a signed JWT file.
+- Click `Import` to import a signed JWT file.
+- Imported projects use the selected filename without `.jwt` as the project name.
+- Project JWTs are signed with the project name as the HS256 secret.
 
 ## License
 

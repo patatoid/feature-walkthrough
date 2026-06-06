@@ -12,6 +12,7 @@
   "dependencies": {
     "axios": "^1.17.0",
     "core-js": "^3.8.3",
+    "jose": "^6.2.3",
     "openai": "^4.77.0",
     "vue": "^2.7.16",
     "vue-async-computed": "^3.9.0"

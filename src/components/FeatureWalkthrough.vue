@@ -86,6 +86,7 @@
 
 <script>
 import axios from 'axios'
+import { SignJWT, jwtVerify } from 'jose'
 
 export default {
   name: 'FeatureWalkthrough',
@@ -108,6 +109,9 @@ export default {
       text: ''
     }
   },
+  mounted () {
+    this.loadTree()
+  },
   computed: {
     currentChildren () {
       return this.tree.children(this.currentNode)
@@ -126,11 +130,6 @@ export default {
     },
     reversedCurrentAncestry () {
       return this.currentAncestry.slice().reverse()
-    }
-  },
-  watch: {
-    storageKey () {
-      this.loadTree()
     }
   },
   asyncComputed: {
@@ -159,8 +158,8 @@ export default {
     }
   },
   methods: {
-    loadTree () {
-      this.tree = new Tree(this.storageKey)
+    async loadTree () {
+      this.tree = await this.tree.load()
       this.currentNode = this.tree.root
     },
     continueStory () {
@@ -180,23 +179,23 @@ export default {
     goto (node) {
       this.currentNode = this.tree.goto(node)
     },
-    fill (text) {
+    async fill (text) {
       this.currentNode.text = text.trim()
-      this.tree.store()
+      await this.tree.store()
     },
-    saveCurrentNode () {
-      this.tree.store()
+    async saveCurrentNode () {
+      await this.tree.store()
     },
-    deleteNode (node) {
+    async deleteNode (node) {
       if (this.tree.contains(node, this.currentNode)) this.currentNode = node.parent || this.tree.root
-      this.tree.destroy(node)
+      await this.tree.destroy(node)
     },
-    deleteCurrentNode () {
+    async deleteCurrentNode () {
       if (!window.confirm('Delete this node and all of its children?')) return
 
       const node = this.currentNode
       this.currentNode = node.parent
-      this.tree.destroy(node)
+      await this.tree.destroy(node)
     }
   }
 }
@@ -217,27 +216,34 @@ class Node {
 }
 
 class Tree {
-  constructor (storageKey) {
+  constructor (storageKey, nodes = []) {
     this.storageKey = storageKey
-    const nodes = JSON.parse(localStorage.getItem(this.storageKey) || '[]')
-    nodes.forEach(n => {
-      if (n.parent) n.parent = nodes.find(b => n.parent.text == b.text)
-    })
-
+    this.storage = new Storage(storageKey)
     this.nodes = nodes
+    this.restoreParents()
 
-    const root = this.nodes.find(n => n.parent === null)
-    if (root) {
-      this.root = root
-    } else {
+    this.root = this.nodes.find(n => n.parent === null)
+    if (!this.root) {
       this.root = new Node(null, null)
       this.nodes.push(this.root)
-      this.store()
     }
   }
 
-  store () {
-    Storage.store(this.storageKey, JSON.stringify(this.storableNodes()))
+  async load () {
+    const nodes = await this.storage.load()
+
+    return Object.assign(this, new Tree(this.storageKey, nodes))
+  }
+
+  restoreParents () {
+    const nodes = this.nodes
+    nodes.forEach(n => {
+      if (n.parent) n.parent = nodes.find(b => n.parent.text == b.text)
+    })
+  }
+
+  async store () {
+    await this.storage.store(this.storableNodes())
   }
 
   isEmpty (node) {
@@ -267,8 +273,6 @@ class Tree {
   up (node) {
     if (!node.parent) return node
 
-    this.store()
-
     return node.parent
   }
 
@@ -276,7 +280,6 @@ class Tree {
     const children = this.nodes.filter(elt => {
       return elt.parent == node.parent
     })
-    this.store()
 
     if (!node.parent) return children[children.indexOf(node) - 1] || children[children.length - 1] || node
 
@@ -287,7 +290,6 @@ class Tree {
     const children = this.nodes.filter(elt => {
       return elt.parent == node.parent
     })
-    this.store()
 
     if (!node.parent) return children[children.indexOf(node) + 1] || children[0] || node
 
@@ -313,21 +315,44 @@ class Tree {
   }
 
   goto (node) {
-    this.store()
     return node
   }
 
-  destroy (node, shouldStore = true) {
-    this.children(node).forEach(child => this.destroy(child, false))
+  async destroy (node, shouldStore = true) {
+    for (const child of this.children(node)) {
+      await this.destroy(child, false)
+    }
     const index = this.nodes.indexOf(node)
     if (index >= 0) this.nodes.splice(index, 1)
-    if (shouldStore) this.store()
+    if (shouldStore) await this.store()
   }
 }
 
 class Storage {
-  static store(key, value) {
-    localStorage.setItem(key, value)
+  constructor (key) {
+    this.key = key
+  }
+
+  async load() {
+    const value = localStorage.getItem(this.key)
+    if (!value) return []
+
+    if (value.trim().startsWith('[')) return JSON.parse(value)
+
+    const { payload } = await jwtVerify(value, this.secret)
+    return payload.nodes || []
+  }
+
+  async store(nodes) {
+    const token = await new SignJWT({ nodes })
+      .setProtectedHeader({ alg: 'HS256' })
+      .sign(this.secret)
+
+    localStorage.setItem(this.key, token)
+  }
+
+  get secret() {
+    return new TextEncoder().encode(this.key)
   }
 }
 

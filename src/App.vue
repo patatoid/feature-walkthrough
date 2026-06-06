@@ -32,13 +32,13 @@
       <form class="ui form new-project-form" @submit.prevent="createProject()">
         <div class="fields">
           <div class="ten wide field">
-            <input v-model.trim="newProjectKey" required placeholder="LocalStorage key">
+            <input v-model.trim="newProjectKey" required placeholder="Project key">
           </div>
           <div class="three wide field">
             <button class="ui fluid blue button" type="submit">Create</button>
           </div>
           <div class="three wide field">
-            <button class="ui fluid button" type="button" @click="selectImportFile()">
+            <button :disabled="!newProjectKey" class="ui fluid button" type="button" @click="selectImportFile()">
               Import
             </button>
           </div>
@@ -48,24 +48,10 @@
       <div class="ui relaxed divided list" v-if="projects.length">
         <div class="item project-item" v-for="projectKey in projects" :key="projectKey">
           <i class="large sitemap middle aligned icon"></i>
-          <div class="content" v-if="editingProjectKey !== projectKey" @click="openProject(projectKey)">
+          <div class="content" @click="openProject(projectKey)">
             <div class="header">{{ projectKey }}</div>
             <div class="description">Stored in localStorage as {{ projectKey }}</div>
           </div>
-          <form class="ui form project-edit-form" v-else @submit.prevent="saveProjectTitle(projectKey)">
-            <div class="ui action input">
-              <input v-model.trim="editingProjectValue">
-              <button class="ui blue icon button" type="submit">
-                <i class="check icon"></i>
-              </button>
-              <button class="ui icon button" type="button" @click="cancelProjectTitleEdit()">
-                <i class="close icon"></i>
-              </button>
-            </div>
-          </form>
-          <button class="ui icon button" v-if="editingProjectKey !== projectKey" @click="editProjectTitle(projectKey)">
-            <i class="edit icon"></i>
-          </button>
           <button class="ui icon button" @click="exportProject(projectKey)">
             <i class="download icon"></i>
           </button>
@@ -86,7 +72,7 @@
         ref="importInput"
         class="project-import-input"
         type="file"
-        accept="application/json,.json"
+        accept=".jwt,application/jwt,text/plain"
         @change="importProject"
       >
 
@@ -94,7 +80,7 @@
         <h2 class="header">How to use Feature walkthrough</h2>
         <div class="ui left aligned blue segment">
           <h3>Create or import a project</h3>
-          <p>Create a local project key, or import a JSON export. Each project is stored separately in localStorage.</p>
+          <p>Create a local project key, or import a signed JWT export. Imported projects use the JWT filename as their project name.</p>
         </div>
         <div class="ui left aligned blue segment">
           <h3>Edit the current feature</h3>
@@ -128,6 +114,7 @@
 
 <script>
 import FeatureWalkthrough from './components/FeatureWalkthrough.vue'
+import { SignJWT, jwtVerify } from 'jose'
 
 const PROJECTS_STORAGE_KEY = 'featureWalkthroughProjects'
 const DEFAULT_PROJECT_KEY = 'nodes'
@@ -146,12 +133,9 @@ export default {
       projects: this.loadProjects(),
       selectedProjectKey: null,
       newProjectKey: '',
-      editingProjectKey: null,
-      editingProjectValue: '',
       openaiApiKeyInput: '',
       openaiApiKey: sessionStorage.getItem(OPENAI_API_KEY_STORAGE_KEY) || '',
-      inactivityTimer: null,
-      importProjectKey: null
+      inactivityTimer: null
     }
   },
   computed: {
@@ -266,75 +250,51 @@ export default {
       this.selectedProjectKey = projectKey
       window.history.pushState({}, '', this.projectPath(projectKey))
     },
-    exportProject (projectKey) {
-      const projectValue = localStorage.getItem(projectKey)
+    async exportProject (projectKey) {
+      let projectValue = localStorage.getItem(projectKey)
       if (projectValue === null) return
+      if (projectValue.trim().startsWith('[')) {
+        projectValue = await new SignJWT({ nodes: JSON.parse(projectValue) })
+          .setProtectedHeader({ alg: 'HS256' })
+          .sign(this.projectSecret(projectKey))
+      }
 
-      const blob = new Blob([projectValue], { type: 'application/json' })
+      const blob = new Blob([projectValue], { type: 'application/jwt' })
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
-      link.download = `${projectKey}.json`
+      link.download = `${projectKey}.jwt`
       link.click()
       URL.revokeObjectURL(link.href)
     },
     selectImportFile () {
-      this.importProjectKey = this.newProjectKey
       this.$refs.importInput.value = ''
       this.$refs.importInput.click()
     },
     importProject (event) {
       const file = event.target.files[0]
       if (!file) return
-      const projectKey = this.importProjectKey || file.name.replace(/\.json$/i, '')
+      const projectKey = this.newProjectKey
       if (!projectKey) return
 
       const reader = new FileReader()
-      reader.onload = () => {
+      reader.onload = async () => {
         try {
           const projectValue = reader.result
-          JSON.parse(projectValue)
+          await jwtVerify(projectValue, this.projectSecret(projectKey))
           localStorage.setItem(projectKey, projectValue)
           this.ensureProjectListed(projectKey)
           this.newProjectKey = ''
           this.openProject(projectKey)
         } catch (_error) {
-          window.alert('The selected file is not valid JSON.')
+          window.alert('The selected file is not a valid signed walkthrough JWT.')
         } finally {
-          this.importProjectKey = null
+          event.target.value = ''
         }
       }
       reader.readAsText(file)
     },
-    editProjectTitle (projectKey) {
-      this.editingProjectKey = projectKey
-      this.editingProjectValue = projectKey
-    },
-    cancelProjectTitleEdit () {
-      this.editingProjectKey = null
-      this.editingProjectValue = ''
-    },
-    saveProjectTitle (projectKey) {
-      const nextProjectKey = this.editingProjectValue
-      if (!nextProjectKey || nextProjectKey === projectKey) {
-        this.cancelProjectTitleEdit()
-        return
-      }
-      if (this.projects.includes(nextProjectKey)) return
-
-      const projectValue = localStorage.getItem(projectKey)
-      if (projectValue !== null) {
-        localStorage.setItem(nextProjectKey, projectValue)
-        localStorage.removeItem(projectKey)
-      }
-
-      this.projects = this.projects.map(project => project === projectKey ? nextProjectKey : project)
-      this.storeProjects()
-      this.cancelProjectTitleEdit()
-
-      if (this.selectedProjectKey === projectKey) {
-        this.selectedProjectKey = nextProjectKey
-        window.history.replaceState({}, '', this.projectPath(nextProjectKey))
-      }
+    projectSecret (projectKey) {
+      return new TextEncoder().encode(projectKey)
     },
     goHome () {
       this.selectedProjectKey = null
@@ -418,12 +378,6 @@ export default {
   .project-item .content {
     flex: 1 1 auto;
     cursor: pointer;
-  }
-  .project-edit-form {
-    flex: 1 1 auto;
-  }
-  .project-edit-form .input {
-    width: 100%;
   }
   .project-import-input {
     display: none;
