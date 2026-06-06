@@ -346,6 +346,7 @@ class Storage {
   async store(nodes) {
     const token = await new SignJWT({ nodes })
       .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
       .sign(this.secret)
 
     localStorage.setItem(this.key, token)
