@@ -252,7 +252,6 @@ export default {
       URL.revokeObjectURL(link.href)
     },
     selectImportFile () {
-      if (!this.newProjectKey) return
       this.importProjectKey = this.newProjectKey
       this.$refs.importInput.value = ''
       this.$refs.importInput.click()
