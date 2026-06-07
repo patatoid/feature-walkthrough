@@ -1,11 +1,11 @@
 export const BORUTA_FEATURE_TREE_PROJECT_KEY = 'boruta-server-feature-tree'
-export const BORUTA_FEATURE_TREE_VERSION = 'technical-business-logic-v9'
+export const BORUTA_FEATURE_TREE_VERSION = 'technical-business-logic-v8'
 
 const BORUTA_FEATURE_TREE = {
-  text: 'Boruta vision: enable organizations, then users, to manage digital identities so data protection improves system security',
+  text: 'Boruta vision: operate a unified authorization server, identity provider, credential issuer, and gateway policy layer',
   children: [
     {
-      text: 'Organizations govern digital identity access through standard OAuth/OpenID authorization requests',
+      text: 'Authorization server accepts standard OAuth/OpenID authorization requests',
       children: [
         {
           text: 'Request acceptance normalizes and validates authorization parameters',
@@ -75,7 +75,7 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'Data protection turns validated grants into bounded and revocable authorization artifacts',
+      text: 'Token service exchanges validated OAuth grants into signed authorization artifacts',
       children: [
         {
           text: 'Token endpoint trust authenticates the client',
@@ -169,7 +169,7 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'Users control identity assurance before their digital identity is used for authorization',
+      text: 'Identity provider establishes resource-owner assurance before authorization decisions',
       children: [
         {
           text: 'Local assurance uses username/password authentication',
@@ -228,7 +228,7 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'Organizations model digital identity governance as clients, scopes, roles, organizations, providers, and upstreams',
+      text: 'Policy domain represents access as clients, scopes, roles, organizations, providers, and upstreams',
       children: [
         {
           text: 'Integration trust is expressed through client policy',
@@ -276,7 +276,7 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'System security improves when protected traffic is authorized before reaching services',
+      text: 'Gateway policy enforcement point applies authorization decisions before protected traffic reaches services',
       children: [
         {
           text: 'Traffic policy models upstream services as protected resources',
@@ -325,7 +325,7 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'Digital identity management extends into OpenID claims, wallet credentials, presentations, and DIDs',
+      text: 'OpenID and wallet layer extends authorization into claims, credentials, presentations, and DIDs',
       children: [
         {
           text: 'Relying-party integration exposes provider metadata and identity claims',
@@ -383,7 +383,7 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'Organizational operators manage policy and runtime objects through an authenticated control plane',
+      text: 'Admin control plane exposes Boruta policy and runtime objects to operators',
       children: [
         {
           text: 'Policy mutation uses authenticated management APIs',
@@ -423,7 +423,7 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'System security depends on secure runtime operation across release and deployment shapes',
+      text: 'Runtime platform operates Boruta securely across release and deployment shapes',
       children: [
         {
           text: 'Initial trust bootstraps runtime secrets and first administration access',
