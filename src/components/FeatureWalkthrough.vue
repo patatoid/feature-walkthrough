@@ -8,24 +8,6 @@
               <i class="blue arrow large alternate circle left icon"></i> {{ node.text }}
             </div>
           </div>
-          <div class="field">
-          <button type="button" @click="up()" :disabled="!currentNode.parent" class="ui fluid icon button">
-              <i class="arrow up icon"></i>
-            </button>
-          </div>
-          <div class="field">
-          <button type="button" @click="deleteCurrentNode()" :disabled="!currentNode.parent" class="ui fluid red icon button">
-              <i class="trash icon"></i>
-            </button>
-          </div>
-          <div class="sibling-nav">
-          <button type="button" @click="left()" :disabled="!currentNode.parent && currentSiblings.length <= 1" class="ui icon button">
-              <i class="arrow left icon"></i>
-            </button>
-          <button type="button" @click="right()" :disabled="!currentNode.parent && currentSiblings.length <= 1" class="ui icon button">
-              <i class="arrow right icon"></i>
-            </button>
-          </div>
           <div class="ui two column stackable grid">
             <div class="column">
               <div class="field editor-panel">
@@ -52,10 +34,30 @@
               </div>
             </div>
           </div>
-          <button class="ui fluid icon blue labeled continue button" type="submit">
-            <i class="arrow down icon"></i>
-            Continue
-          </button>
+          <div class="actions">
+            <div class="field">
+              <button type="button" @click="up()" :disabled="!currentNode.parent" class="ui fluid icon button">
+                <i class="arrow up icon"></i>
+              </button>
+            </div>
+            <div class="field">
+            <button type="button" @click="deleteCurrentNode()" :disabled="!currentNode.parent" class="ui fluid red icon button">
+                <i class="trash icon"></i>
+              </button>
+            </div>
+            <div class="sibling-nav">
+            <button type="button" @click="left()" :disabled="!currentNode.parent && currentSiblings.length <= 1" class="ui icon button">
+                <i class="arrow left icon"></i>
+              </button>
+            <button type="button" @click="right()" :disabled="!currentNode.parent && currentSiblings.length <= 1" class="ui icon button">
+                <i class="arrow right icon"></i>
+              </button>
+            </div>
+            <button class="ui fluid icon blue labeled continue button" type="submit">
+              <i class="arrow down icon"></i>
+              Continue
+            </button>
+          </div>
           <div class="children-list">
             <div class="ui child segment" v-for="node in currentChildren" @click="goto(node)" :key="node.text">
               <i class="blue arrow large alternate circle right icon"></i> {{ node.text }}
@@ -422,6 +424,9 @@ class Storage {
     height: 20rem;
     display: flex;
     flex-direction: column;
+  }
+  .actions {
+    margin-top: 1rem;
   }
   textarea:focus {
     border-color: #2185d0!important;
