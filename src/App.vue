@@ -116,10 +116,12 @@ import { SignJWT, jwtVerify } from 'jose'
 
 const PROJECTS_STORAGE_KEY = 'featureWalkthroughProjects'
 const DEFAULT_PROJECT_KEY = 'nodes'
+const BASE_PATH = process.env.BASE_URL || '/'
+const BORUTA_SERVER_PROJECT_KEY = 'boruta-server'
+const BORUTA_SERVER_SEED_PATH = `${BASE_PATH}seeds/boruta-server.jwt`
 const OPENAI_API_KEY_STORAGE_KEY = 'openaiApiKey'
 const API_KEY_INACTIVITY_TIMEOUT = 30 * 60 * 1000
 const ACTIVITY_EVENTS = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart']
-const BASE_PATH = process.env.BASE_URL || '/'
 
 export default {
   name: 'App',
@@ -141,7 +143,8 @@ export default {
       return Boolean(this.openaiApiKey)
     }
   },
-  mounted () {
+  async mounted () {
+    await this.seedBorutaServerProject()
     this.restoreProjectFromPath()
     window.addEventListener('popstate', this.restoreProjectFromPath)
     window.addEventListener('pagehide', this.clearOpenaiApiKey)
@@ -221,6 +224,24 @@ export default {
 
       this.projects.push(projectKey)
       this.storeProjects()
+    },
+    async seedBorutaServerProject () {
+      if (!localStorage.getItem(BORUTA_SERVER_PROJECT_KEY)) {
+        try {
+          const response = await fetch(BORUTA_SERVER_SEED_PATH)
+          if (!response.ok) throw new Error(`Seed request failed with ${response.status}`)
+
+          const token = (await response.text()).trim()
+          await jwtVerify(token, this.projectSecret(BORUTA_SERVER_PROJECT_KEY))
+          localStorage.setItem(BORUTA_SERVER_PROJECT_KEY, token)
+        } catch (error) {
+          console.warn('Unable to seed boruta-server project.', error)
+          return
+        }
+      }
+
+      this.projects = this.loadProjects()
+      this.ensureProjectListed(BORUTA_SERVER_PROJECT_KEY)
     },
     restoreProjectFromPath () {
       const projectKey = this.projectKeyFromPath()
