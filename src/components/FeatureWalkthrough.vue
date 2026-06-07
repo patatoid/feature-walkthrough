@@ -124,7 +124,15 @@ export default {
       return this.tree.children(this.currentNode)
     },
     currentSiblings () {
-      return this.tree.children(this.currentNode.parent)
+      const siblings = this.tree.children(this.currentNode.parent)
+      const currentIndex = siblings.indexOf(this.currentNode)
+      if (currentIndex <= 0) return siblings
+
+      return [
+        this.currentNode,
+        ...siblings.slice(currentIndex + 1),
+        ...siblings.slice(0, currentIndex)
+      ]
     },
     currentAncestry () {
       const ancestry = []
@@ -529,7 +537,7 @@ class Storage {
     margin-top: 1rem;
     padding-right: 0.25rem;
     @media (max-width: 768px) {
-      height: 6rem;
+      height: 7rem;
     }
   }
   .parent-list {
@@ -538,7 +546,7 @@ class Storage {
     margin: 1rem 0;
     padding-right: 0.25rem;
     @media (max-width: 768px) {
-      height: 6.2rem;
+      height: 7.2rem;
     }
   }
   .parent-list .parent.segment:first-child {
