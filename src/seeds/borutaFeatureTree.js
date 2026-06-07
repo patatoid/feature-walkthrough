@@ -1,15 +1,17 @@
 export const BORUTA_FEATURE_TREE_PROJECT_KEY = 'boruta-server-feature-tree'
-export const BORUTA_FEATURE_TREE_VERSION = 'technical-business-logic-v3'
+export const BORUTA_FEATURE_TREE_VERSION = 'technical-business-logic-v8'
 
 const BORUTA_FEATURE_TREE = {
-  text: 'Boruta vision: one authority for identity, authorization, credentials, and protected traffic',
+  text: 'Boruta vision: operate a unified authorization server, identity provider, credential issuer, and gateway policy layer',
   children: [
     {
-      text: 'Authorize every actor through standard protocol entry points',
+      text: 'Authorization server accepts standard OAuth/OpenID authorization requests',
       children: [
         {
-          text: 'Normalize and validate the incoming authorization request',
+          text: 'Request acceptance normalizes and validates authorization parameters',
           children: [
+            { text: 'Authorization input is represented as validated protocol state before any user interaction' },
+            { text: 'A shared authorization flow executes client, redirect, scope, response type, and session decisions consistently' },
             { text: 'Parse client_id, redirect_uri, response_type, scope, state, nonce, code_challenge, prompt, and resource parameters' },
             { text: 'Resolve request_uri when the client uses pushed authorization request state' },
             { text: 'Load the client and reject unknown or disabled client identifiers' },
@@ -22,7 +24,7 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Resolve the resource-owner authentication context',
+          text: 'Authorization continuity resolves resource-owner session context',
           children: [
             { text: 'Fetch the current Phoenix session and map it to a Boruta identity user/resource owner' },
             { text: 'Evaluate prompt and session policy to decide whether existing authentication is reusable' },
@@ -33,8 +35,10 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Evaluate consent and scope grantability',
+          text: 'Delegated authorization evaluates consent and scope grantability',
           children: [
+            { text: 'The decision context carries client, resource owner, scopes, redirect URI, nonce, and requested response mode together' },
+            { text: 'Accepted authorization is represented before it is serialized into redirects, codes, tokens, or errors' },
             { text: 'Compute effective scopes from requested scopes, client policy, user roles, organizations, and existing consent' },
             { text: 'Detect whether consent can be skipped or must be explicitly collected from the user' },
             { text: 'Render consent with human-readable scope labels and client context' },
@@ -44,8 +48,10 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Materialize authorization response artifacts',
+          text: 'Successful authorization materializes response artifacts',
           children: [
+            { text: 'Authorization responses serialize code, token, ID token, state, or error outputs according to the requested flow' },
+            { text: 'Authorization code state is persisted behind a storage boundary so the token endpoint can consume it later' },
             { text: 'Create authorization code records bound to client, resource owner, redirect URI, scopes, nonce, PKCE challenge, and expiration' },
             { text: 'Issue implicit or hybrid access token artifacts only after the same policy checks succeed' },
             { text: 'Issue ID token artifacts with OpenID claims and nonce when response_type requires OpenID output' },
@@ -54,8 +60,11 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Handle pushed authorization request as a pre-authorization object',
+          text: 'Safer front-channel authorization stores pushed authorization requests',
           children: [
+            { text: 'Pushed authorization payloads are stored server-side behind a request URI' },
+            { text: 'The pushed authorization response returns request URI and expiration metadata to the client' },
+            { text: 'Structured request state is persisted behind a storage boundary shared by authorization and token flows' },
             { text: 'Authenticate or identify the client submitting the PAR payload' },
             { text: 'Validate the submitted authorization parameters before storing them' },
             { text: 'Persist request object state and return a request_uri plus expiration' },
@@ -66,11 +75,13 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'Exchange validated grants into signed authorization artifacts',
+      text: 'Token service exchanges validated OAuth grants into signed authorization artifacts',
       children: [
         {
-          text: 'Authenticate the client at the token endpoint',
+          text: 'Token endpoint trust authenticates the client',
           children: [
+            { text: 'Token endpoint input is normalized before grant-specific validation runs' },
+            { text: 'HTTP Basic client credentials are extracted when present before falling back to other client authentication methods' },
             { text: 'Parse client authentication from Basic auth, request body credentials, or assertion-based inputs' },
             { text: 'Load the client and verify the configured secret, key material, or assertion trust requirements' },
             { text: 'Reject grant execution when the client is unknown, disabled, unauthenticated, or not allowed for the grant type' },
@@ -78,8 +89,10 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Execute authorization_code grant',
+          text: 'User-delegated token issuance uses authorization_code grant exchange',
           children: [
+            { text: 'Authorization code exchange variants are represented separately from other token grants' },
+            { text: 'Grant validation and token response creation run through a shared token exchange flow' },
             { text: 'Load the authorization code record and verify it has not expired or already been consumed' },
             { text: 'Ensure the exchanging client matches the client bound to the code' },
             { text: 'Ensure redirect_uri matches the redirect URI recorded during authorization' },
@@ -89,8 +102,9 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Execute client_credentials grant',
+          text: 'Service authorization uses client_credentials grant exchange',
           children: [
+            { text: 'Machine-to-machine token requests are represented separately from user-delegated grants' },
             { text: 'Use the authenticated client as the authorization subject when no human resource owner exists' },
             { text: 'Intersect requested scopes with the client allowed-scope set' },
             { text: 'Reject scopes outside the service or partner contract' },
@@ -99,8 +113,10 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Execute password and refresh_token grants',
+          text: 'Legacy and session-continuity authorization use password and refresh_token grants',
           children: [
+            { text: 'Resource-owner password credential exchange is modeled separately from browser authorization' },
+            { text: 'Refresh token exchange is modeled as session-continuity state rather than fresh user authentication' },
             { text: 'Password grant verifies resource-owner credentials through the configured account backend' },
             { text: 'Password grant applies client and scope policy before minting tokens' },
             { text: 'Refresh token grant loads existing refresh token state and verifies client binding' },
@@ -109,8 +125,10 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Execute assertion and preauthorized code grants',
+          text: 'Signed and issuer-prepared authorization uses assertion and preauthorized code grants',
           children: [
+            { text: 'Preauthorized code requests support issuer-prepared credential pickup state' },
+            { text: 'Agent-oriented code and credential requests support advanced delegated access flows' },
             { text: 'JWT bearer assertions validate issuer, subject, audience, signature, expiration, and client trust' },
             { text: 'Client assertion authentication validates signed client identity before grant execution' },
             { text: 'Preauthorized code grant resolves issuer-prepared credential issuance state' },
@@ -119,8 +137,11 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Generate, sign, and persist token artifacts',
+          text: 'Token service generates, signs, and persists token artifacts',
           children: [
+            { text: 'Token responses carry access token, refresh token, ID token, expiration, scope, and token type metadata' },
+            { text: 'Issued access and refresh token state is persisted behind a storage boundary for later lookup and revocation' },
+            { text: 'Token material generation and JWT signing are centralized so algorithms, keys, and identifiers stay consistent' },
             { text: 'Access tokens carry subject, client, scopes, timestamps, and authorization context' },
             { text: 'ID tokens carry OpenID claims and nonce-sensitive authentication context' },
             { text: 'Refresh tokens keep longer-lived session continuity separate from access token lifetime' },
@@ -130,8 +151,12 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Introspect, revoke, and validate active authorization state',
+          text: 'Token lifecycle control uses introspection, revocation, and validation',
           children: [
+            { text: 'Token active-state lookup runs through a dedicated introspection flow' },
+            { text: 'Introspection request and response contracts are represented explicitly for protected resources' },
+            { text: 'Token invalidation runs through a dedicated revocation flow' },
+            { text: 'Bearer-token consumption is normalized for protected resources and gateway checks' },
             { text: 'Bearer token parsing extracts access token material from protected requests' },
             { text: 'Introspection authenticates the caller before exposing token metadata' },
             { text: 'Introspection reports active, client_id, sub, scope, token_type, exp, iat, and authorization context when available' },
@@ -144,10 +169,10 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'Establish resource-owner assurance before authorization decisions',
+      text: 'Identity provider establishes resource-owner assurance before authorization decisions',
       children: [
         {
-          text: 'Run local username/password authentication',
+          text: 'Local assurance uses username/password authentication',
           children: [
             { text: 'Render the login template selected by identity provider configuration' },
             { text: 'Locate the internal user through backend-specific user lookup rules' },
@@ -158,7 +183,7 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Run LDAP and federated authentication',
+          text: 'External assurance uses LDAP and federated authentication',
           children: [
             { text: 'LDAP backend binds against enterprise directory credentials and maps directory attributes to user context' },
             { text: 'LDAP metadata and role mapping connect external accounts to Boruta claims and scope eligibility' },
@@ -168,7 +193,7 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Apply step-up authentication and authenticator enrollment',
+          text: 'Higher assurance uses step-up authentication and authenticator enrollment',
           children: [
             { text: 'TOTP registration stores second-factor enrollment for a user' },
             { text: 'TOTP authentication validates one-time codes before continuing the session flow' },
@@ -180,7 +205,7 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Manage account lifecycle around authentication',
+          text: 'Durable assurance manages account lifecycle around authentication',
           children: [
             { text: 'Registration validates user input, backend policy, organization defaults, and optional role defaults' },
             { text: 'Confirmation token issuance and consumption verifies email ownership before higher-trust flows' },
@@ -191,7 +216,7 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Project authenticated account data into authorization claims',
+          text: 'Authorization inputs project authenticated account data into claims',
           children: [
             { text: 'User records provide subject, profile, email, and custom metadata claims for ID token and userinfo output' },
             { text: 'Role assignments determine which scopes a user can receive through business policy' },
@@ -203,11 +228,13 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'Represent access policy as composable domain objects',
+      text: 'Policy domain represents access as clients, scopes, roles, organizations, providers, and upstreams',
       children: [
         {
-          text: 'Client policy defines what an integration is allowed to do',
+          text: 'Integration trust is expressed through client policy',
           children: [
+            { text: 'Client lookup, validation, and persistence are abstracted behind a storage boundary' },
+            { text: 'The default server storage shape records client metadata used by protocol flows and administration' },
             { text: 'Client records model applications, partners, services, wallets, and the admin console' },
             { text: 'Grant-type settings restrict which OAuth flows a client may use' },
             { text: 'Redirect URI settings constrain where browser authorization responses can be delivered' },
@@ -216,8 +243,10 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Scope policy defines the permission vocabulary',
+          text: 'Permission semantics are expressed through scope policy',
           children: [
+            { text: 'Scope lookup and persistence are abstracted behind a storage boundary' },
+            { text: 'The default server storage shape records scope metadata consumed by tokens and admin screens' },
             { text: 'Scopes are the atomic authorization units requested by clients and granted to tokens' },
             { text: 'Scope labels expose protocol permissions in administrator and user-facing language' },
             { text: 'Role-scope links bundle scopes into reusable business permission sets' },
@@ -225,8 +254,10 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Role and organization policy define business context',
+          text: 'Business context is expressed through role and organization policy',
           children: [
+            { text: 'The resource-owner contract decouples OAuth flows from the concrete identity user store' },
+            { text: 'Identity users are linked to protocol authorization state as resource owners' },
             { text: 'Roles map users to scope bundles without duplicating permission assignments' },
             { text: 'Organizations group users into tenant, customer, department, or issuer boundaries' },
             { text: 'Organization restrictions can limit access to the administration surface' },
@@ -234,7 +265,7 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Identity provider and backend policy define authentication behavior',
+          text: 'Authentication behavior is expressed through identity provider and backend policy',
           children: [
             { text: 'Identity provider settings control registration, confirmation, consent, session choice, TOTP, WebAuthn, and check-password behavior' },
             { text: 'Backend settings control local, LDAP, federated, mail, SMTP, password hashing, metadata, and role defaults' },
@@ -245,10 +276,10 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'Enforce authorization decisions at the protected traffic boundary',
+      text: 'Gateway policy enforcement point applies authorization decisions before protected traffic reaches services',
       children: [
         {
-          text: 'Model upstream services as protected resources',
+          text: 'Traffic policy models upstream services as protected resources',
           children: [
             { text: 'Upstream records identify protected traffic by node name, virtual host, scheme, host, port, and URI list' },
             { text: 'Authorize flag distinguishes public forwarding from protected resource enforcement' },
@@ -258,7 +289,7 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Enforce access before forwarding traffic',
+          text: 'Gateway protection enforces access before forwarding traffic',
           children: [
             { text: 'Gateway selects the matching upstream policy from virtual host, scheme, host, port, URI, and node context' },
             { text: 'Gateway determines whether the matched upstream is public or authorization-protected' },
@@ -272,7 +303,7 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Pass trusted authorization context downstream',
+          text: 'Service handoff passes trusted authorization context downstream',
           children: [
             { text: 'Forwarded token settings create signed context for the protected service' },
             { text: 'Forwarded token payload represents the gateway-verified subject, client, scopes, and authorization context' },
@@ -283,7 +314,7 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Operate gateway as a distributed authorization layer',
+          text: 'Scalable enforcement operates the gateway as a distributed authorization layer',
           children: [
             { text: 'Service registry records node name, Erlang node name, IP address, aliases, certificate, and configuration' },
             { text: 'Root cluster CA and generated certificates support node-to-node trust' },
@@ -294,11 +325,14 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'Extend authorization into OpenID claims and decentralized credentials',
+      text: 'OpenID and wallet layer extends authorization into claims, credentials, presentations, and DIDs',
       children: [
         {
-          text: 'Expose provider metadata and identity claims',
+          text: 'Relying-party integration exposes provider metadata and identity claims',
           children: [
+            { text: 'OpenID provider metadata is generated from configured issuer, endpoints, algorithms, and supported capabilities' },
+            { text: 'Signing keys are exposed through a reusable key publication flow' },
+            { text: 'Userinfo claims are resolved from authorized token context and account claims' },
             { text: 'OpenID configuration describes issuer, endpoints, response types, signing algorithms, and supported capabilities' },
             { text: 'JWKS exposes keys used to validate signed tokens' },
             { text: 'Userinfo returns claims for valid tokens according to authorized scope and subject context' },
@@ -306,8 +340,11 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Implement verifiable credential issuance',
+          text: 'Credential issuer uses verifiable credential issuance',
           children: [
+            { text: 'Credential issuance requests run through a dedicated credential issuance flow' },
+            { text: 'Immediate and deferred credential issuance outputs are represented as distinct response shapes' },
+            { text: 'Credential persistence is abstracted behind a storage boundary' },
             { text: 'Credential issuer metadata describes supported credential issuance capabilities' },
             { text: 'Credential endpoint validates access token, credential format, credential type, holder binding, and issuer policy' },
             { text: 'Credential endpoint issues wallet-consumable credentials when token and request policy are valid' },
@@ -318,8 +355,11 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Implement verifiable presentation and wallet flows',
+          text: 'Wallet-mediated authorization uses verifiable presentation flows',
           children: [
+            { text: 'Wallet presentation responses are accepted through a dedicated direct-post flow' },
+            { text: 'Presentation results are represented as explicit accepted, rejected, pending, or completed outcomes' },
+            { text: 'Verifier-initiated presentation state is modeled separately from token issuance state' },
             { text: 'Presentation request creates pending verifier state for wallet-mediated authentication or proof submission' },
             { text: 'Direct post endpoint accepts wallet presentation responses for a pending presentation request' },
             { text: 'Direct post validation checks response code, presentation payload, holder binding, and request correlation' },
@@ -330,8 +370,10 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Use DID infrastructure when decentralized identity is enabled',
+          text: 'Decentralized trust anchors use DID infrastructure',
           children: [
+            { text: 'DID material is resolved and created through configured resolver and registrar services' },
+            { text: 'OpenID and credential artifacts are signed with configured key material' },
             { text: 'DID resolver base URL resolves decentralized identifiers used in signatures and credentials' },
             { text: 'DID registrar base URL creates decentralized identifiers when configured' },
             { text: 'DID services API key authorizes resolver and registrar calls' },
@@ -341,11 +383,12 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'Expose the authorization system as an operator-controlled policy plane',
+      text: 'Admin control plane exposes Boruta policy and runtime objects to operators',
       children: [
         {
-          text: 'Manage implemented authorization objects through authenticated APIs',
+          text: 'Policy mutation uses authenticated management APIs',
           children: [
+            { text: 'Core-managed clients, scopes, tokens, and users are exposed to admin workflows through management contexts' },
             { text: 'Clients API creates, updates, deletes, regenerates DID, and regenerates key pairs' },
             { text: 'Scopes API manages permission records consumed by tokens and gateway rules' },
             { text: 'Roles API manages bundles of scopes assigned to users or defaults' },
@@ -358,7 +401,7 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Import and validate declarative business configuration',
+          text: 'Repeatable policy deployment uses declarative configuration import',
           children: [
             { text: 'Configuration loader accepts YAML configuration for repeatable environments' },
             { text: 'Schemas validate client, scope, role, backend, identity provider, organization, template, and error-template sections' },
@@ -367,7 +410,7 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Expose operator UI for domain workflows',
+          text: 'Operator usability uses domain-oriented UI workflows',
           children: [
             { text: 'Dashboard summarizes requests and business events' },
             { text: 'Client screens manage application trust and key material' },
@@ -380,10 +423,10 @@ const BORUTA_FEATURE_TREE = {
       ]
     },
     {
-      text: 'Operate the authority securely across deployment shapes',
+      text: 'Runtime platform operates Boruta securely across release and deployment shapes',
       children: [
         {
-          text: 'Bootstrap runtime trust and first administration access',
+          text: 'Initial trust bootstraps runtime secrets and first administration access',
           children: [
             { text: 'Environment variables seed the first admin user and password' },
             { text: 'Environment variables seed the admin OAuth client id and secret' },
@@ -392,8 +435,9 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Protect sensitive endpoints and flows',
+          text: 'Runtime hardening protects sensitive endpoints and flows',
           children: [
+            { text: 'Local and distributed caches accelerate repeated authorization lookups' },
             { text: 'Rate limit plug protects OAuth, identity, and account routes from repeated abusive calls' },
             { text: 'CSRF protection guards browser session and form flows' },
             { text: 'Secure browser headers are applied to browser pipelines' },
@@ -402,7 +446,7 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Support audit, retention, and incident response',
+          text: 'Operational accountability uses audit, retention, and incident response',
           children: [
             { text: 'Logs store request and business events for administrator review' },
             { text: 'Retention settings bound the lifetime of stored logs' },
@@ -412,46 +456,13 @@ const BORUTA_FEATURE_TREE = {
           ]
         },
         {
-          text: 'Package the same business logic for different deployment shapes',
+          text: 'Deployment flexibility packages the same business logic for different shapes',
           children: [
             { text: 'Full release runs authorization server, admin control plane, and gateway together' },
             { text: 'Authorization-focused release exposes protocol business logic without standalone gateway focus' },
             { text: 'Admin-focused release isolates policy management from runtime traffic' },
             { text: 'Gateway-focused release deploys enforcement close to protected services' },
             { text: 'Docker, Docker Compose, release, Ansible, and cluster settings support production rollout choices' }
-          ]
-        }
-      ]
-    },
-    {
-      text: 'Factor reusable protocol business logic into the Boruta core dependency',
-      children: [
-        {
-          text: 'Core package implements reusable OAuth and OpenID business rules',
-          children: [
-            { text: 'Authorization, token, introspection, revocation, PAR, JWKS, userinfo, credential, and direct-post applications live in the dependency' },
-            { text: 'Request modules model each protocol request as validated business input' },
-            { text: 'Response modules model each protocol output as explicit domain response data' },
-            { text: 'Error modules keep protocol failures structured and reusable across server surfaces' }
-          ]
-        },
-        {
-          text: 'Core package provides persistence contracts',
-          children: [
-            { text: 'Adapters abstract clients, scopes, access tokens, codes, agent tokens, requests, credentials, and preauthorized codes' },
-            { text: 'Ecto schemas provide default storage for OAuth clients, scopes, tokens, authorization requests, and credentials' },
-            { text: 'Admin contexts expose core clients, scopes, users, and tokens to higher-level control planes' },
-            { text: 'Cache modules support fast and distributed lookup of authorization state' }
-          ]
-        },
-        {
-          text: 'boruta-server composes the core package into a full product',
-          children: [
-            { text: 'boruta_auth app wraps the external boruta package inside the umbrella' },
-            { text: 'boruta_web exposes protocol endpoints backed by core applications' },
-            { text: 'boruta_identity supplies human account and authentication policy around core resource owners' },
-            { text: 'boruta_admin exposes management workflows around the core objects' },
-            { text: 'boruta_gateway consumes issued token decisions to enforce access on protected traffic' }
           ]
         }
       ]
