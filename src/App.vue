@@ -113,12 +113,12 @@
 <script>
 import FeatureWalkthrough from './components/FeatureWalkthrough.vue'
 import { SignJWT, jwtVerify } from 'jose'
+import borutaServerSeed from './seeds/boruta-server.jwt'
 
 const PROJECTS_STORAGE_KEY = 'featureWalkthroughProjects'
 const DEFAULT_PROJECT_KEY = 'nodes'
 const BASE_PATH = process.env.BASE_URL || '/'
-const BORUTA_SERVER_PROJECT_KEY = 'boruta-server-example'
-const BORUTA_SERVER_SEED_PATH = `${BASE_PATH}seeds/boruta-server.jwt`
+const BORUTA_SERVER_PROJECT_KEY = 'boruta-server-example-tree'
 const OPENAI_API_KEY_STORAGE_KEY = 'openaiApiKey'
 const API_KEY_INACTIVITY_TIMEOUT = 30 * 60 * 1000
 const ACTIVITY_EVENTS = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart']
@@ -228,10 +228,7 @@ export default {
     async seedBorutaServerProject () {
       if (!localStorage.getItem(BORUTA_SERVER_PROJECT_KEY)) {
         try {
-          const response = await fetch(BORUTA_SERVER_SEED_PATH)
-          if (!response.ok) throw new Error(`Seed request failed with ${response.status}`)
-
-          const token = (await response.text()).trim()
+          const token = borutaServerSeed.trim()
           await jwtVerify(token, this.projectSecret(BORUTA_SERVER_PROJECT_KEY))
           localStorage.setItem(BORUTA_SERVER_PROJECT_KEY, token)
         } catch (error) {
