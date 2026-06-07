@@ -112,17 +112,11 @@
 
 <script>
 import FeatureWalkthrough from './components/FeatureWalkthrough.vue'
-import {
-  BORUTA_FEATURE_TREE_NODES,
-  BORUTA_FEATURE_TREE_PROJECT_KEY,
-  BORUTA_FEATURE_TREE_VERSION
-} from './seeds/borutaFeatureTree'
 import { SignJWT, jwtVerify } from 'jose'
 
 const PROJECTS_STORAGE_KEY = 'featureWalkthroughProjects'
 const DEFAULT_PROJECT_KEY = 'nodes'
 const OPENAI_API_KEY_STORAGE_KEY = 'openaiApiKey'
-const BORUTA_FEATURE_TREE_VERSION_STORAGE_KEY = `${BORUTA_FEATURE_TREE_PROJECT_KEY}:version`
 const API_KEY_INACTIVITY_TIMEOUT = 30 * 60 * 1000
 const ACTIVITY_EVENTS = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart']
 const BASE_PATH = process.env.BASE_URL || '/'
@@ -148,7 +142,6 @@ export default {
     }
   },
   mounted () {
-    this.seedBorutaFeatureTree()
     this.restoreProjectFromPath()
     window.addEventListener('popstate', this.restoreProjectFromPath)
     window.addEventListener('pagehide', this.clearOpenaiApiKey)
@@ -176,18 +169,6 @@ export default {
     },
     storeProjects () {
       localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(this.projects))
-    },
-    seedBorutaFeatureTree () {
-      if (
-        !localStorage.getItem(BORUTA_FEATURE_TREE_PROJECT_KEY) ||
-        localStorage.getItem(BORUTA_FEATURE_TREE_VERSION_STORAGE_KEY) !== BORUTA_FEATURE_TREE_VERSION
-      ) {
-        localStorage.setItem(BORUTA_FEATURE_TREE_PROJECT_KEY, JSON.stringify(BORUTA_FEATURE_TREE_NODES))
-        localStorage.setItem(BORUTA_FEATURE_TREE_VERSION_STORAGE_KEY, BORUTA_FEATURE_TREE_VERSION)
-      }
-
-      this.ensureProjectListed(BORUTA_FEATURE_TREE_PROJECT_KEY)
-      this.projects = this.loadProjects()
     },
     saveOpenaiApiKey () {
       this.openaiApiKey = this.openaiApiKeyInput
