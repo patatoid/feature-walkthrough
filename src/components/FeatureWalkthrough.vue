@@ -52,16 +52,16 @@
               </div>
             </div>
           </div>
+          <button class="ui fluid icon blue labeled continue button" type="submit">
+            <i class="arrow down icon"></i>
+            Continue
+          </button>
           <div class="children-list">
             <div class="ui child segment" v-for="node in currentChildren" @click="goto(node)" :key="node.text">
               <i class="blue arrow large alternate circle right icon"></i> {{ node.text }}
               <i @click.stop="deleteNode(node)" class="ui delete close icon"></i>
             </div>
           </div>
-          <button class="ui fluid icon blue labeled continue button" type="submit">
-            <i class="arrow down icon"></i>
-            Continue
-          </button>
         </form>
       </div>
       <div class="four wide column sibling-column">
