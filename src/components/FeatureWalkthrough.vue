@@ -526,7 +526,7 @@ class Storage {
     margin-top: 1rem;
     padding-right: 0.25rem;
     @media (max-width: 768px) {
-      height: 12rem;
+      height: 6rem;
     }
   }
   .parent-list {
@@ -534,6 +534,9 @@ class Storage {
     overflow-y: auto;
     margin: 1rem 0;
     padding-right: 0.25rem;
+    @media (max-width: 768px) {
+      height: 6.2rem;
+    }
   }
   .parent-list .parent.segment:first-child {
     margin-top: 0;
