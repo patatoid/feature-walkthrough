@@ -396,7 +396,10 @@ class Storage {
 
 <style scoped>
 .writing {
-  padding: 2em;
+  padding: 2rem;
+  @media (max-width: 768px) {
+    padding: 2rem 0;
+  }
 }
   textarea {
     width: 100%;
@@ -459,6 +462,9 @@ class Storage {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    @media (max-width: 768px) {
+      height: auto;
+    }
   }
   .siblings-header {
     display: flex;
@@ -520,8 +526,7 @@ class Storage {
     margin-top: 1rem;
     padding-right: 0.25rem;
     @media (max-width: 768px) {
-      max-height: 18rem;
-      height: auto;
+      height: 12rem;
     }
   }
   .parent-list {

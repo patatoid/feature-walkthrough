@@ -4,12 +4,10 @@
       <button class="ui icon button" v-if="selectedProjectKey" @click="goHome()">
         <i class="home icon"></i>
       </button>
-      <h1 v-if="selectedProjectKey">Feature walkthrough - {{ selectedProjectKey }}</h1>
-      <h1 v-else>Feature walkthrough</h1>
       <button class="ui red button" v-if="isLoggedIn" @click="logout()">Logout</button>
     </div>
-
     <div class="ui container home" v-if="!selectedProjectKey">
+      <h1>Feature walkthrough</h1>
       <div class="ui warning icon message">
         <i class="shield alternate icon"></i>
         <div class="content">
