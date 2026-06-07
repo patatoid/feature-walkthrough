@@ -117,7 +117,7 @@ import { SignJWT, jwtVerify } from 'jose'
 const PROJECTS_STORAGE_KEY = 'featureWalkthroughProjects'
 const DEFAULT_PROJECT_KEY = 'nodes'
 const BASE_PATH = process.env.BASE_URL || '/'
-const BORUTA_SERVER_PROJECT_KEY = 'boruta-server'
+const BORUTA_SERVER_PROJECT_KEY = 'boruta-server-example'
 const BORUTA_SERVER_SEED_PATH = `${BASE_PATH}seeds/boruta-server.jwt`
 const OPENAI_API_KEY_STORAGE_KEY = 'openaiApiKey'
 const API_KEY_INACTIVITY_TIMEOUT = 30 * 60 * 1000
