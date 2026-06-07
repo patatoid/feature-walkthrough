@@ -441,10 +441,13 @@ class Storage {
     flex: 1 1 0;
   }
   .suggestions-panel {
-    height: 13rem;
+    height: 20rem;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    @media (max-width: 768px) {
+      height: 13rem;
+    }
   }
   .walkthrough-grid {
     align-items: stretch!important;
