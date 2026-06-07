@@ -441,7 +441,7 @@ class Storage {
     flex: 1 1 0;
   }
   .suggestions-panel {
-    height: 20rem;
+    height: 13rem;
     display: flex;
     flex-direction: column;
     overflow: hidden;
