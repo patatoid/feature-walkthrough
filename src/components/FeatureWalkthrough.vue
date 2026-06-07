@@ -3,11 +3,6 @@
     <div class="ui stackable grid">
       <div class="twelve wide column">
         <form class="ui form" @submit.prevent="continueStory()">
-          <div class="parents-list">
-            <div class="ui parent segment" v-for="node in reversedCurrentAncestry" @click="goto(node)" :key="node.text">
-              <i class="blue arrow large alternate circle left icon"></i> {{ node.text }}
-            </div>
-          </div>
           <div class="ui two column stackable grid">
             <div class="column">
               <div class="field editor-panel">
@@ -34,6 +29,11 @@
               </div>
             </div>
           </div>
+          <div class="parent-list">
+            <div class="ui parent segment" v-for="node in reversedCurrentAncestry" @click="goto(node)" :key="node.text">
+              <i class="blue arrow large alternate circle left icon"></i> {{ node.text }}
+            </div>
+          </div>
           <div class="actions">
             <div class="field">
               <button type="button" @click="up()" :disabled="!currentNode.parent" class="ui fluid icon button">
@@ -58,7 +58,7 @@
               Continue
             </button>
           </div>
-          <div class="children-list">
+          <div class="child-list">
             <div class="ui child segment" v-for="node in currentChildren" @click="goto(node)" :key="node.text">
               <i class="blue arrow large alternate circle right icon"></i> {{ node.text }}
               <i @click.stop="deleteNode(node)" class="ui delete close icon"></i>
@@ -392,11 +392,6 @@ class Storage {
     return new TextEncoder().encode(this.key)
   }
 }
-
-// class BackendStorage {
-//   store(key, value) {
-//   }
-// }
 </script>
 
 <style scoped>
@@ -519,7 +514,7 @@ class Storage {
       right: 1rem;
     }
   }
-  .children-list {
+  .child-list {
     height: 9rem;
     overflow-y: auto;
     margin-top: 1rem;
@@ -529,24 +524,24 @@ class Storage {
       height: auto;
     }
   }
-  .parents-list {
+  .parent-list {
     height: 9.2rem;
     overflow-y: auto;
-    margin-bottom: 1rem;
+    margin: 1rem 0;
     padding-right: 0.25rem;
   }
-  .parents-list .parent.segment:first-child {
+  .parent-list .parent.segment:first-child {
     margin-top: 0;
     font-size: 1.2em;
     font-weight: bold;
   }
-  .parents-list .parent.segment:last-child {
+  .parent-list .parent.segment:last-child {
     margin-bottom: 0;
   }
-  .children-list .child.segment:first-child {
+  .child-list .child.segment:first-child {
     margin-top: 0;
   }
-  .children-list .child.segment:last-child {
+  .child-list .child.segment:last-child {
     margin-bottom: 0;
   }
   .continue.button {
