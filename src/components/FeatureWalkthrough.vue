@@ -185,6 +185,9 @@ export default {
       this.currentNode = this.tree.goto(node)
     },
     async fill (text) {
+      if (!this.tree.isEmpty(this.currentNode)) {
+        this.currentNode = this.tree.appendLeftFrom(this.currentNode)
+      }
       this.currentNode.text = text.trim()
       await this.tree.store()
     },
