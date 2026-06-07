@@ -1,4 +1,4 @@
-export const BORUTA_FEATURE_TREE_PROJECT_KEY = 'boruta-server-feature-tree'
+export const BORUTA_FEATURE_TREE_PROJECT_KEY = 'boruta-server-example-tree'
 export const BORUTA_FEATURE_TREE_VERSION = 'technical-business-logic-v9'
 
 const BORUTA_FEATURE_TREE = {
