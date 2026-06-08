@@ -506,7 +506,7 @@ class Storage {
     color: #1f2933!important;
     box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06)!important;
     font-family: Lato, 'Helvetica Neue', Arial, Helvetica, sans-serif!important;
-    font-size: 1.25rem!important;
+    font-size: 2rem!important;
     line-height: 1.65!important;
     resize: vertical;
     transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
