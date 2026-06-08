@@ -324,7 +324,7 @@ export default {
         return
       }
 
-      this.enterFocusedChild()
+      this.down()
     },
     clearKeyboardFocus () {
       this.focusedChildIndex = null
