@@ -59,7 +59,13 @@
             </button>
           </div>
           <div class="child-list">
-            <div class="ui child segment" v-for="node in currentChildren" @click="goto(node)" :key="node.text">
+            <div
+              class="ui child segment"
+              v-for="(node, index) in currentChildren"
+              :class="{ 'blue inverted': index === focusedChildIndex }"
+              @click="goto(node)"
+              :key="node.text"
+            >
               <i class="blue arrow large alternate circle right icon"></i> {{ node.text }}
               <i @click.stop="deleteNode(node)" class="ui delete close icon"></i>
             </div>
@@ -113,6 +119,7 @@ export default {
     return {
       tree: tree,
       currentNode: tree.root,
+      focusedChildIndex: null,
       text: ''
     }
   },
@@ -180,23 +187,38 @@ export default {
     async loadTree () {
       this.tree = await this.tree.load()
       this.currentNode = this.tree.root
+      this.focusedChildIndex = null
     },
     continueStory () {
       if (this.tree.isEmpty(this.currentNode)) return
 
       this.currentNode = this.tree.appendLeftFrom(this.currentNode)
+      this.focusedChildIndex = null
     },
     up () {
       this.currentNode = this.tree.up(this.currentNode)
+      this.focusedChildIndex = null
     },
     left () {
       this.currentNode = this.tree.left(this.currentNode)
+      this.focusedChildIndex = null
     },
     right () {
       this.currentNode = this.tree.right(this.currentNode)
+      this.focusedChildIndex = null
     },
     down () {
-      this.currentNode = this.tree.down(this.currentNode)
+      if (!this.currentChildren.length) return
+
+      this.focusedChildIndex = this.focusedChildIndex === null
+        ? 0
+        : (this.focusedChildIndex + 1) % this.currentChildren.length
+    },
+    enterFocusedChild () {
+      if (this.focusedChildIndex === null) return
+
+      const child = this.currentChildren[this.focusedChildIndex]
+      if (child) this.goto(child)
     },
     navigateWithKeyboard (event) {
       if (this.isTextInputEvent(event) || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
@@ -205,7 +227,8 @@ export default {
         ArrowUp: this.up,
         ArrowDown: this.down,
         ArrowLeft: this.left,
-        ArrowRight: this.right
+        ArrowRight: this.right,
+        Enter: this.enterFocusedChild
       }
       const movement = movements[event.key]
       if (!movement) return
@@ -224,11 +247,13 @@ export default {
     },
     goto (node) {
       this.currentNode = this.tree.goto(node)
+      this.focusedChildIndex = null
     },
     async fill (text) {
       if (!this.tree.isEmpty(this.currentNode)) {
         this.currentNode = this.tree.appendLeftFrom(this.currentNode)
       }
+      this.focusedChildIndex = null
       this.currentNode.text = text.trim()
       await this.tree.store()
     },
@@ -237,6 +262,7 @@ export default {
     },
     async deleteNode (node) {
       if (this.tree.contains(node, this.currentNode)) this.currentNode = this.tree.afterDelete(node)
+      this.focusedChildIndex = null
       await this.tree.destroy(node)
     },
     async deleteCurrentNode () {
@@ -244,6 +270,7 @@ export default {
 
       const node = this.currentNode
       this.currentNode = this.tree.afterDelete(node)
+      this.focusedChildIndex = null
       await this.tree.destroy(node)
     },
     async exportCurrentNode () {
@@ -352,9 +379,7 @@ class Tree {
       return elt.parent == node.parent
     })
 
-    if (!node.parent) return children[children.indexOf(node) - 1] || children[children.length - 1] || node
-
-    return children[children.indexOf(node) - 1] || this.appendLeftFrom(node.parent)
+    return children[children.indexOf(node) - 1] || children[children.length - 1] || node
   }
 
   right (node) {
@@ -362,13 +387,7 @@ class Tree {
       return elt.parent == node.parent
     })
 
-    if (!node.parent) return children[children.indexOf(node) + 1] || children[0] || node
-
-    return children[children.indexOf(node) + 1] || this.appendRightFrom(node.parent)
-  }
-
-  down (node) {
-    return this.children(node)[0] || node
+    return children[children.indexOf(node) + 1] || children[0] || node
   }
 
   afterDelete (node) {
@@ -572,6 +591,9 @@ class Storage {
       top: 1.2rem;
       right: 1rem;
     }
+  }
+  .child.segment.blue.inverted .icon {
+    color: #fff!important;
   }
   .child-list {
     height: 9rem;
