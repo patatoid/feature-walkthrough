@@ -58,9 +58,10 @@
               Continue
             </button>
           </div>
-          <div class="child-list">
+          <div class="child-list" ref="childList">
             <div
               class="ui child segment"
+              ref="childItems"
               v-for="(node, index) in currentChildren"
               :class="{ 'blue inverted': index === focusedChildIndex }"
               @click="goto(node)"
@@ -213,6 +214,28 @@ export default {
       this.focusedChildIndex = this.focusedChildIndex === null
         ? 0
         : (this.focusedChildIndex + 1) % this.currentChildren.length
+      this.scrollFocusedChildIntoView()
+    },
+    scrollFocusedChildIntoView () {
+      this.$nextTick(() => {
+        if (this.focusedChildIndex === null) return
+
+        const wrapper = this.$refs.childList
+        const children = this.$refs.childItems || []
+        const child = children[this.focusedChildIndex]
+        if (!wrapper || !child) return
+
+        const childTop = child.offsetTop - wrapper.offsetTop
+        const childBottom = childTop + child.offsetHeight
+        const visibleTop = wrapper.scrollTop
+        const visibleBottom = visibleTop + wrapper.clientHeight
+
+        if (childTop < visibleTop) {
+          wrapper.scrollTop = childTop
+        } else if (childBottom > visibleBottom) {
+          wrapper.scrollTop = childBottom - wrapper.clientHeight
+        }
+      })
     },
     enterFocusedChild () {
       if (this.focusedChildIndex === null) return
@@ -228,7 +251,8 @@ export default {
         ArrowDown: this.down,
         ArrowLeft: this.left,
         ArrowRight: this.right,
-        Enter: this.enterFocusedChild
+        Enter: this.enterFocusedChild,
+        Delete: this.deleteCurrentNode
       }
       const movement = movements[event.key]
       if (!movement) return
