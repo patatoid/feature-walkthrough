@@ -236,14 +236,14 @@ export default {
       await this.tree.store()
     },
     async deleteNode (node) {
-      if (this.tree.contains(node, this.currentNode)) this.currentNode = node.parent || this.tree.root
+      if (this.tree.contains(node, this.currentNode)) this.currentNode = this.tree.afterDelete(node)
       await this.tree.destroy(node)
     },
     async deleteCurrentNode () {
       if (!window.confirm('Delete this node and all of its children?')) return
 
       const node = this.currentNode
-      this.currentNode = node.parent
+      this.currentNode = this.tree.afterDelete(node)
       await this.tree.destroy(node)
     },
     async exportCurrentNode () {
@@ -369,6 +369,13 @@ class Tree {
 
   down (node) {
     return this.children(node)[0] || node
+  }
+
+  afterDelete (node) {
+    const siblings = this.children(node.parent)
+    const index = siblings.indexOf(node)
+
+    return siblings[index + 1] || siblings[index - 1] || node.parent || this.root
   }
 
   children(node) {
