@@ -717,6 +717,10 @@ class Storage {
   .child {
     cursor: pointer;
     padding-right: 3rem!important;
+    &:focus {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
     .delete {
       position: absolute;
       top: 1.2rem;
