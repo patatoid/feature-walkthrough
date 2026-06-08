@@ -1,5 +1,12 @@
 <template>
   <div class="writing">
+    <div class="ui warning icon message">
+      <i class="shield alternate icon"></i>
+      <div class="content">
+        <div class="header">Storage security</div>
+        <p>Projects are stored in localStorage and remain on this browser until deleted. The OpenAI API key is stored only in sessionStorage, but it is still available to this page while the tab is open; avoid using this app on shared or untrusted devices.</p>
+      </div>
+    </div>
     <div class="ui stackable grid">
       <div class="twelve wide column">
         <form class="ui form" @submit.prevent="continueStory()">
