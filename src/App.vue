@@ -12,7 +12,7 @@
         <i class="shield alternate icon"></i>
         <div class="content">
           <div class="header">Storage security</div>
-          <p>Projects are stored in localStorage and remain on this browser until deleted. The OpenAI API key is stored only in sessionStorage, but it is still available to this page while the tab is open; avoid using this app on shared or untrusted devices.</p>
+          <p>Projects are stored in localStorage and remain on this browser until deleted. If provided, the OpenAI API key is stored only in sessionStorage, but it is still available to this page while the tab is open; avoid using this app on shared or untrusted devices.</p>
         </div>
       </div>
 
