@@ -686,6 +686,10 @@ class Storage {
   .sibling.segment {
     cursor: pointer;
     overflow-wrap: anywhere;
+    &.inverted {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
   }
   .sibling.segment:first-child {
     margin-top: 0;
@@ -717,7 +721,7 @@ class Storage {
   .child {
     cursor: pointer;
     padding-right: 3rem!important;
-    &:focus {
+    &.inverted {
       font-size: 1.2em;
       font-weight: bold;
     }
