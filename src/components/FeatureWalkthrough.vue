@@ -251,6 +251,9 @@ export default {
       const child = this.currentChildren[this.focusedChildIndex]
       if (child) this.goto(child)
     },
+    clearChildFocus () {
+      this.focusedChildIndex = null
+    },
     navigateWithKeyboard (event) {
       if (this.isTextInputEvent(event) || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
 
@@ -260,6 +263,7 @@ export default {
         ArrowLeft: this.left,
         ArrowRight: this.right,
         Enter: this.enterFocusedChild,
+        Escape: this.clearChildFocus,
         Delete: this.deleteCurrentNode
       }
       const movement = movements[event.key]
