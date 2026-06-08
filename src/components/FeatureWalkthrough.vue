@@ -18,7 +18,7 @@
             <div class="column">
               <div class="ui segment suggestions-panel">
                 <h4 class="ui dividing header">AI suggestions</h4>
-                <div class="suggestions-content">
+                <div class="suggestions-content" ref="suggestionsList">
                   <div class="suggestions-loader" v-if="$asyncComputed.currentCompletions.updating">
                     <i class="notched circle loading icon"></i>
                   </div>
@@ -28,7 +28,15 @@
                       <div class="header">No AI suggestions yet</div>
                     </div>
                   </div>
-                  <div class="ui completion segment" v-else v-for="completion in currentCompletions" @click="fill(completion)" :key="completion">
+                  <div
+                    class="ui completion segment"
+                    ref="suggestionItems"
+                    v-else
+                    v-for="(completion, index) in currentCompletions"
+                    :class="{ 'blue inverted': index === focusedCompletionIndex }"
+                    @click="fill(completion)"
+                    :key="completion"
+                  >
                     {{ completion }}
                   </div>
                 </div>
@@ -127,6 +135,7 @@ export default {
       tree: tree,
       currentNode: tree.root,
       focusedChildIndex: null,
+      focusedCompletionIndex: null,
       text: ''
     }
   },
@@ -195,12 +204,14 @@ export default {
       this.tree = await this.tree.load()
       this.currentNode = this.tree.root
       this.focusedChildIndex = null
+      this.focusedCompletionIndex = null
     },
     continueStory () {
       if (this.tree.isEmpty(this.currentNode)) return
 
       this.currentNode = this.tree.appendLeftFrom(this.currentNode)
       this.focusedChildIndex = null
+      this.focusedCompletionIndex = null
       this.focusEditor()
     },
     continueSibling () {
@@ -208,6 +219,7 @@ export default {
 
       this.currentNode = this.tree.appendRightFrom(this.currentNode.parent)
       this.focusedChildIndex = null
+      this.focusedCompletionIndex = null
       this.focusEditor()
     },
     up () {
@@ -221,14 +233,17 @@ export default {
 
       this.currentNode = this.tree.up(this.currentNode)
       this.focusedChildIndex = null
+      this.focusedCompletionIndex = null
     },
     left () {
       this.currentNode = this.tree.left(this.currentNode)
       this.focusedChildIndex = null
+      this.focusedCompletionIndex = null
     },
     right () {
       this.currentNode = this.tree.right(this.currentNode)
       this.focusedChildIndex = null
+      this.focusedCompletionIndex = null
     },
     down () {
       if (!this.currentChildren.length) return
@@ -256,7 +271,47 @@ export default {
       const child = this.currentChildren[this.focusedChildIndex]
       if (child) this.goto(child)
     },
+    pageDown () {
+      this.focusCompletion(1)
+    },
+    pageUp () {
+      this.focusCompletion(-1)
+    },
+    focusCompletion (direction) {
+      if (!this.currentCompletions.length) return
+
+      if (this.focusedCompletionIndex === null) {
+        this.focusedCompletionIndex = direction > 0 ? 0 : this.currentCompletions.length - 1
+      } else {
+        this.focusedCompletionIndex = (this.focusedCompletionIndex + direction + this.currentCompletions.length) % this.currentCompletions.length
+      }
+      this.focusedChildIndex = null
+      this.scrollFocusedSuggestionToTop()
+    },
+    scrollFocusedSuggestionToTop () {
+      this.$nextTick(() => {
+        if (this.focusedCompletionIndex === null) return
+
+        const wrapper = this.$refs.suggestionsList
+        const suggestions = this.$refs.suggestionItems || []
+        const suggestion = suggestions[this.focusedCompletionIndex]
+        if (!wrapper || !suggestion) return
+
+        wrapper.scrollTop = suggestion.offsetTop - wrapper.offsetTop
+      })
+    },
+    enterFocusedCompletion () {
+      if (this.focusedCompletionIndex === null) return false
+
+      const completion = this.currentCompletions[this.focusedCompletionIndex]
+      if (!completion) return false
+
+      this.fill(completion)
+      return true
+    },
     enter () {
+      if (this.enterFocusedCompletion()) return
+
       if (this.focusedChildIndex !== null) {
         this.enterFocusedChild()
         return
@@ -264,8 +319,9 @@ export default {
 
       this.continueSibling()
     },
-    clearChildFocus () {
+    clearKeyboardFocus () {
       this.focusedChildIndex = null
+      this.focusedCompletionIndex = null
     },
     focusEditor () {
       this.$nextTick(() => {
@@ -281,7 +337,9 @@ export default {
         ArrowLeft: this.left,
         ArrowRight: this.right,
         Enter: this.enter,
-        Escape: this.clearChildFocus,
+        Escape: this.clearKeyboardFocus,
+        PageUp: this.pageUp,
+        PageDown: this.pageDown,
         ' ': this.continueStory,
         Spacebar: this.continueStory,
         Delete: this.deleteCurrentNode
@@ -304,14 +362,17 @@ export default {
     goto (node) {
       this.currentNode = this.tree.goto(node)
       this.focusedChildIndex = null
+      this.focusedCompletionIndex = null
     },
     async fill (text) {
       if (!this.tree.isEmpty(this.currentNode)) {
         this.currentNode = this.tree.appendLeftFrom(this.currentNode)
       }
       this.focusedChildIndex = null
+      this.focusedCompletionIndex = null
       this.currentNode.text = text.trim()
       await this.tree.store()
+      this.focusEditor()
     },
     async saveCurrentNode () {
       await this.tree.store()
@@ -319,6 +380,7 @@ export default {
     async deleteNode (node) {
       if (this.tree.contains(node, this.currentNode)) this.currentNode = this.tree.afterDelete(node)
       this.focusedChildIndex = null
+      this.focusedCompletionIndex = null
       await this.tree.destroy(node)
     },
     async deleteCurrentNode () {
@@ -327,6 +389,7 @@ export default {
       const node = this.currentNode
       this.currentNode = this.tree.afterDelete(node)
       this.focusedChildIndex = null
+      this.focusedCompletionIndex = null
       await this.tree.destroy(node)
     },
     async exportCurrentNode () {
@@ -630,6 +693,10 @@ class Storage {
     flex: 1 1 auto;
     overflow-y: scroll;
     padding-right: 0.25rem;
+  }
+  .completion.segment {
+    cursor: pointer;
+    overflow-wrap: anywhere;
   }
   .suggestions-loader {
     min-height: 100%;
