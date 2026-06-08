@@ -195,6 +195,7 @@ export default {
 
       this.currentNode = this.tree.appendLeftFrom(this.currentNode)
       this.focusedChildIndex = null
+      this.focusEditor()
     },
     up () {
       if (this.focusedChildIndex !== null && this.currentChildren.length) {
@@ -245,6 +246,11 @@ export default {
     clearChildFocus () {
       this.focusedChildIndex = null
     },
+    focusEditor () {
+      this.$nextTick(() => {
+        if (this.$refs.content) this.$refs.content.focus()
+      })
+    },
     navigateWithKeyboard (event) {
       if (this.isTextInputEvent(event) || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
 
@@ -255,6 +261,8 @@ export default {
         ArrowRight: this.right,
         Enter: this.enterFocusedChild,
         Escape: this.clearChildFocus,
+        ' ': this.continueStory,
+        Spacebar: this.continueStory,
         Delete: this.deleteCurrentNode
       }
       const movement = movements[event.key]
