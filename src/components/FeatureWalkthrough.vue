@@ -6,7 +6,13 @@
           <div class="ui two column stackable grid">
             <div class="column">
               <div class="field editor-panel">
-                <textarea ref="content" v-model="currentNode.text" @keyup="saveCurrentNode()" placeholder="Describe this feature..."></textarea>
+                <textarea
+                  ref="content"
+                  v-model="currentNode.text"
+                  @keyup="saveCurrentNode()"
+                  @keydown.esc.prevent="$event.target.blur()"
+                  placeholder="Describe this feature..."
+                ></textarea>
               </div>
             </div>
             <div class="column">
@@ -197,6 +203,13 @@ export default {
       this.focusedChildIndex = null
       this.focusEditor()
     },
+    continueSibling () {
+      if (!this.currentNode.parent || this.tree.isEmpty(this.currentNode)) return
+
+      this.currentNode = this.tree.appendRightFrom(this.currentNode.parent)
+      this.focusedChildIndex = null
+      this.focusEditor()
+    },
     up () {
       if (this.focusedChildIndex !== null && this.currentChildren.length) {
         this.focusedChildIndex = this.focusedChildIndex === 0
@@ -243,6 +256,14 @@ export default {
       const child = this.currentChildren[this.focusedChildIndex]
       if (child) this.goto(child)
     },
+    enter () {
+      if (this.focusedChildIndex !== null) {
+        this.enterFocusedChild()
+        return
+      }
+
+      this.continueSibling()
+    },
     clearChildFocus () {
       this.focusedChildIndex = null
     },
@@ -259,7 +280,7 @@ export default {
         ArrowDown: this.down,
         ArrowLeft: this.left,
         ArrowRight: this.right,
-        Enter: this.enterFocusedChild,
+        Enter: this.enter,
         Escape: this.clearChildFocus,
         ' ': this.continueStory,
         Spacebar: this.continueStory,
