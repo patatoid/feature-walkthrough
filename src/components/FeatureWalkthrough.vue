@@ -197,6 +197,14 @@ export default {
       this.focusedChildIndex = null
     },
     up () {
+      if (this.focusedChildIndex !== null && this.currentChildren.length) {
+        this.focusedChildIndex = this.focusedChildIndex === 0
+          ? this.currentChildren.length - 1
+          : this.focusedChildIndex - 1
+        this.scrollFocusedChildIntoView()
+        return
+      }
+
       this.currentNode = this.tree.up(this.currentNode)
       this.focusedChildIndex = null
     },
