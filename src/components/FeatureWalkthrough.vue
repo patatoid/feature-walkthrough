@@ -627,8 +627,10 @@ class Storage {
     overflow-y: auto;
     margin-top: 1rem;
     padding-right: 0.25rem;
+    padding-bottom: 9rem;
     @media (max-width: 768px) {
       height: 7rem;
+      padding-bottom: 7rem;
     }
   }
   .parent-list {
