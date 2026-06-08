@@ -118,6 +118,10 @@ export default {
   },
   mounted () {
     this.loadTree()
+    window.addEventListener('keydown', this.navigateWithKeyboard)
+  },
+  beforeDestroy () {
+    window.removeEventListener('keydown', this.navigateWithKeyboard)
   },
   computed: {
     currentChildren () {
@@ -190,6 +194,33 @@ export default {
     },
     right () {
       this.currentNode = this.tree.right(this.currentNode)
+    },
+    down () {
+      this.currentNode = this.tree.down(this.currentNode)
+    },
+    navigateWithKeyboard (event) {
+      if (this.isTextInputEvent(event) || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+
+      const movements = {
+        ArrowUp: this.up,
+        ArrowDown: this.down,
+        ArrowLeft: this.left,
+        ArrowRight: this.right
+      }
+      const movement = movements[event.key]
+      if (!movement) return
+
+      event.preventDefault()
+      movement()
+    },
+    isTextInputEvent (event) {
+      const tagName = event.target && event.target.tagName
+      return event.target && (
+        event.target.isContentEditable ||
+        tagName === 'INPUT' ||
+        tagName === 'TEXTAREA' ||
+        tagName === 'SELECT'
+      )
     },
     goto (node) {
       this.currentNode = this.tree.goto(node)
@@ -334,6 +365,10 @@ class Tree {
     if (!node.parent) return children[children.indexOf(node) + 1] || children[0] || node
 
     return children[children.indexOf(node) + 1] || this.appendRightFrom(node.parent)
+  }
+
+  down (node) {
+    return this.children(node)[0] || node
   }
 
   children(node) {
