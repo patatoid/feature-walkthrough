@@ -212,6 +212,7 @@ export default {
       this.currentNode = this.tree.root
       this.focusedChildIndex = null
       this.focusedCompletionIndex = null
+      this.scrollChildListToTop()
     },
     continueStory () {
       if (this.tree.isEmpty(this.currentNode)) return
@@ -219,6 +220,7 @@ export default {
       this.currentNode = this.tree.appendLeftFrom(this.currentNode)
       this.focusedChildIndex = null
       this.focusedCompletionIndex = null
+      this.scrollChildListToTop()
       this.focusEditor()
     },
     continueSibling () {
@@ -227,6 +229,7 @@ export default {
       this.currentNode = this.tree.appendRightFrom(this.currentNode.parent)
       this.focusedChildIndex = null
       this.focusedCompletionIndex = null
+      this.scrollChildListToTop()
       this.focusEditor()
     },
     up () {
@@ -241,16 +244,19 @@ export default {
       this.currentNode = this.tree.up(this.currentNode)
       this.focusedChildIndex = null
       this.focusedCompletionIndex = null
+      this.scrollChildListToTop()
     },
     left () {
       this.currentNode = this.tree.left(this.currentNode)
       this.focusedChildIndex = null
       this.focusedCompletionIndex = null
+      this.scrollChildListToTop()
     },
     right () {
       this.currentNode = this.tree.right(this.currentNode)
       this.focusedChildIndex = null
       this.focusedCompletionIndex = null
+      this.scrollChildListToTop()
     },
     down () {
       if (!this.currentChildren.length) return
@@ -270,6 +276,12 @@ export default {
         if (!wrapper || !child) return
 
         wrapper.scrollTop = child.offsetTop - wrapper.offsetTop
+      })
+    },
+    scrollChildListToTop () {
+      this.$nextTick(() => {
+        const wrapper = this.$refs.childList
+        if (wrapper) wrapper.scrollTop = 0
       })
     },
     enterFocusedChild () {
@@ -370,6 +382,7 @@ export default {
       this.currentNode = this.tree.goto(node)
       this.focusedChildIndex = null
       this.focusedCompletionIndex = null
+      this.scrollChildListToTop()
     },
     async fill (text) {
       if (!this.tree.isEmpty(this.currentNode)) {
@@ -377,6 +390,7 @@ export default {
       }
       this.focusedChildIndex = null
       this.focusedCompletionIndex = null
+      this.scrollChildListToTop()
       this.currentNode.text = text.trim()
       await this.tree.store()
       this.focusEditor()
@@ -388,6 +402,7 @@ export default {
       if (this.tree.contains(node, this.currentNode)) this.currentNode = this.tree.afterDelete(node)
       this.focusedChildIndex = null
       this.focusedCompletionIndex = null
+      this.scrollChildListToTop()
       await this.tree.destroy(node)
     },
     async deleteCurrentNode () {
@@ -397,6 +412,7 @@ export default {
       this.currentNode = this.tree.afterDelete(node)
       this.focusedChildIndex = null
       this.focusedCompletionIndex = null
+      this.scrollChildListToTop()
       await this.tree.destroy(node)
     },
     async exportCurrentNode () {
