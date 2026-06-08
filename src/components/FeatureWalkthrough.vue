@@ -201,7 +201,7 @@ export default {
         this.focusedChildIndex = this.focusedChildIndex === 0
           ? this.currentChildren.length - 1
           : this.focusedChildIndex - 1
-        this.scrollFocusedChildIntoView()
+        this.scrollFocusedChildToTop()
         return
       }
 
@@ -222,9 +222,9 @@ export default {
       this.focusedChildIndex = this.focusedChildIndex === null
         ? 0
         : (this.focusedChildIndex + 1) % this.currentChildren.length
-      this.scrollFocusedChildIntoView()
+      this.scrollFocusedChildToTop()
     },
-    scrollFocusedChildIntoView () {
+    scrollFocusedChildToTop () {
       this.$nextTick(() => {
         if (this.focusedChildIndex === null) return
 
@@ -233,16 +233,7 @@ export default {
         const child = children[this.focusedChildIndex]
         if (!wrapper || !child) return
 
-        const childTop = child.offsetTop - wrapper.offsetTop
-        const childBottom = childTop + child.offsetHeight
-        const visibleTop = wrapper.scrollTop
-        const visibleBottom = visibleTop + wrapper.clientHeight
-
-        if (childTop < visibleTop) {
-          wrapper.scrollTop = childTop
-        } else if (childBottom > visibleBottom) {
-          wrapper.scrollTop = childBottom - wrapper.clientHeight
-        }
+        wrapper.scrollTop = child.offsetTop - wrapper.offsetTop
       })
     },
     enterFocusedChild () {
