@@ -118,7 +118,7 @@ import borutaServerSeed from './seeds/boruta-server.jwt'
 const PROJECTS_STORAGE_KEY = 'featureWalkthroughProjects'
 const DEFAULT_PROJECT_KEY = 'nodes'
 const BASE_PATH = process.env.BASE_URL || '/'
-const BORUTA_SERVER_PROJECT_KEY = 'boruta-server-example-tree'
+const BORUTA_SERVER_PROJECT_KEY = 'boruta-server'
 const OPENAI_API_KEY_STORAGE_KEY = 'openaiApiKey'
 const API_KEY_INACTIVITY_TIMEOUT = 30 * 60 * 1000
 const ACTIVITY_EVENTS = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart']
