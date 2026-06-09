@@ -385,9 +385,8 @@ export default {
       this.scrollChildListToTop()
     },
     async fill (text) {
-      if (!this.tree.isEmpty(this.currentNode)) {
-        this.currentNode = this.tree.appendLeftFrom(this.currentNode)
-      }
+      const parent = this.currentNode.parent || this.currentNode
+      this.currentNode = this.tree.appendLeftFrom(parent)
       this.focusedChildIndex = null
       this.focusedCompletionIndex = null
       this.scrollChildListToTop()
