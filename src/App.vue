@@ -53,6 +53,9 @@
           <button class="ui icon button" @click="exportProject(projectKey)">
             <i class="download icon"></i>
           </button>
+          <button class="ui icon button" @click="showProjectPrompt(projectKey)">
+            <i class="terminal icon"></i>
+          </button>
           <button class="ui red icon button" @click="deleteProject(projectKey)">
             <i class="trash icon"></i>
           </button>
@@ -73,6 +76,33 @@
         accept=".jwt,application/jwt,text/plain"
         @change="importProject"
       >
+
+      <div class="prompt-overlay" v-if="promptPopoverOpen" @click.self="closeProjectPrompt()">
+        <div class="ui segment prompt-popover">
+          <div class="prompt-header">
+            <h2 class="ui header">Coding prompt</h2>
+            <button class="ui icon button" type="button" @click="closeProjectPrompt()">
+              <i class="close icon"></i>
+            </button>
+          </div>
+          <p class="prompt-project">Project: {{ promptProjectKey }}</p>
+          <textarea
+            ref="promptText"
+            class="prompt-textarea"
+            readonly
+            :value="projectPrompt"
+          ></textarea>
+          <div class="prompt-actions">
+            <span class="prompt-copy-status" v-if="promptCopyStatus" role="status" aria-live="polite">
+              {{ promptCopyStatus }}
+            </span>
+            <button class="ui blue icon labeled button" type="button" @click="copyProjectPrompt()">
+              <i class="copy icon"></i>
+              Copy
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div class="ui right aligned large basic home-help segment">
         <h2 class="header">How to use Feature walkthrough</h2>
@@ -135,7 +165,12 @@ export default {
       newProjectKey: '',
       openaiApiKeyInput: '',
       openaiApiKey: sessionStorage.getItem(OPENAI_API_KEY_STORAGE_KEY) || '',
-      inactivityTimer: null
+      inactivityTimer: null,
+      promptPopoverOpen: false,
+      promptProjectKey: '',
+      projectPrompt: '',
+      promptCopyStatus: '',
+      promptCopyStatusTimer: null
     }
   },
   computed: {
@@ -162,6 +197,7 @@ export default {
       window.removeEventListener(eventName, this.resetInactivityTimer)
     })
     this.clearInactivityTimer()
+    this.clearPromptCopyStatus()
   },
   methods: {
     loadProjects () {
@@ -283,6 +319,129 @@ export default {
       link.click()
       URL.revokeObjectURL(link.href)
     },
+    async showProjectPrompt (projectKey) {
+      const nodes = await this.loadProjectNodes(projectKey)
+      this.clearPromptCopyStatus()
+      this.promptProjectKey = projectKey
+      this.projectPrompt = this.buildCodingPrompt(projectKey, nodes)
+      this.promptPopoverOpen = true
+      this.$nextTick(() => {
+        if (this.$refs.promptText) this.$refs.promptText.focus()
+      })
+    },
+    closeProjectPrompt () {
+      this.promptPopoverOpen = false
+      this.promptProjectKey = ''
+      this.projectPrompt = ''
+      this.clearPromptCopyStatus()
+    },
+    async copyProjectPrompt () {
+      try {
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(this.projectPrompt)
+          this.showPromptCopyStatus()
+          return
+        }
+      } catch (error) {
+        // Fall back to the selected textarea copy path below.
+      }
+
+      if (!this.$refs.promptText) return
+
+      this.$refs.promptText.select()
+      if (document.execCommand('copy')) {
+        this.showPromptCopyStatus()
+      }
+    },
+    showPromptCopyStatus () {
+      this.clearPromptCopyStatus()
+      this.promptCopyStatus = 'Copied to clipboard'
+      this.promptCopyStatusTimer = window.setTimeout(() => {
+        this.promptCopyStatus = ''
+        this.promptCopyStatusTimer = null
+      }, 2500)
+    },
+    clearPromptCopyStatus () {
+      if (this.promptCopyStatusTimer) {
+        window.clearTimeout(this.promptCopyStatusTimer)
+        this.promptCopyStatusTimer = null
+      }
+
+      if (this.promptCopyStatus) {
+        this.promptCopyStatus = ''
+        return
+      }
+    },
+    async loadProjectNodes (projectKey) {
+      const projectValue = localStorage.getItem(projectKey)
+      if (!projectValue) return []
+
+      if (projectValue.trim().startsWith('[')) return JSON.parse(projectValue)
+
+      const { payload } = await jwtVerify(projectValue, this.projectSecret(projectKey))
+      return payload.nodes || []
+    },
+    buildCodingPrompt (projectKey, nodes) {
+      const outline = this.buildFeatureOutline(nodes)
+
+      return `You are a senior software engineer. Build an application from the feature tree below.
+
+Treat the tree as the source of truth for the product requirements. Each node is a feature, and child nodes refine or constrain the parent feature. Preserve the intent of the hierarchy when designing the app.
+
+Project key: ${projectKey}
+
+Your task:
+- Infer the application's core user workflow from the root and first-level branches.
+- Implement the smallest complete app that satisfies the tree.
+- Prefer working software over placeholder screens.
+- Use the existing project stack unless instructed otherwise.
+- Keep code modular and readable.
+- Add focused tests for core behavior where practical.
+- Do not invent major product features outside the tree, except small glue behavior needed to make the app usable.
+
+Feature tree:
+
+${outline || '(No feature nodes yet.)'}
+
+Implementation requirements:
+- Build the actual usable application, not a landing page.
+- Make the first screen the main user workflow.
+- Persist user data locally unless the tree explicitly requires a backend.
+- Include empty states, validation, deletion/undo behavior where implied by the tree.
+- Make navigation match the tree's hierarchy when useful, but do not expose the tree literally unless that is the app's purpose.
+- Keep the UI compact, clear, and responsive.
+- After implementation, run lint/build/tests and report what passed or failed.
+
+Before coding:
+- Summarize the inferred product in 5-10 bullets.
+- Identify ambiguous nodes and make conservative assumptions.
+- Then implement without waiting for more clarification unless a requirement is impossible.`
+    },
+    buildFeatureOutline (nodes) {
+      const root = nodes.find(node => node.parent === null) || nodes[0]
+      if (!root) return ''
+
+      const lines = []
+      const walk = (node, depth) => {
+        const text = node.text && node.text.trim()
+        if (text) lines.push(`${'  '.repeat(depth)}- ${text}`)
+
+        this.nodeChildren(nodes, node).forEach(child => {
+          walk(child, text ? depth + 1 : depth)
+        })
+      }
+
+      walk(root, 0)
+
+      return lines.join('\n')
+    },
+    nodeChildren (nodes, parent) {
+      return nodes.filter(node => {
+        if (!node.parent) return false
+
+        return node.parent.text == parent.text
+      })
+    },
     selectImportFile () {
       this.$refs.importInput.value = ''
       this.$refs.importInput.click()
@@ -400,5 +559,55 @@ export default {
   }
   .project-import-input {
     display: none;
+  }
+  .prompt-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.35);
+  }
+  .prompt-popover {
+    display: flex;
+    flex-direction: column;
+    width: min(900px, 100%);
+    max-height: calc(100vh - 2rem);
+  }
+  .prompt-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .prompt-header .ui.header {
+    flex: 1 1 auto;
+    margin: 0;
+  }
+  .prompt-project {
+    color: #616161;
+    margin-bottom: 0.75rem;
+  }
+  .prompt-textarea {
+    width: 100%;
+    min-height: 45vh;
+    resize: vertical;
+    font-family: monospace;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    white-space: pre;
+  }
+  .prompt-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1rem;
+  }
+  .prompt-copy-status {
+    color: #2185d0;
+    font-weight: 600;
   }
 </style>
