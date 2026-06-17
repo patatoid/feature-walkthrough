@@ -98,9 +98,12 @@
         <div class="ui segment siblings-panel">
           <div class="siblings-header">
             <h4 class="ui header">Siblings</h4>
-            <button class="ui icon button" type="button" @click="exportCurrentNode()">
-              <i class="download icon"></i>
-            </button>
+            <div class="siblings-actions">
+              <button class="ui icon button" type="button" @click="exportCurrentNode()">
+                <i class="download icon"></i>
+              </button>
+              <PromptButton :prompt="currentNodePrompt" />
+            </div>
           </div>
           <div class="siblings-content">
             <div
@@ -121,10 +124,14 @@
 
 <script>
 import axios from 'axios'
+import PromptButton from './PromptButton.vue'
 import { SignJWT, jwtVerify } from 'jose'
 
 export default {
   name: 'FeatureWalkthrough',
+  components: {
+    PromptButton
+  },
   props: {
     storageKey: {
       type: String,
@@ -423,6 +430,65 @@ export default {
       link.download = filename.replace(/[^\w.-]+/g, '-')
       link.click()
       URL.revokeObjectURL(link.href)
+    },
+    currentNodePrompt () {
+      const label = this.currentNode.text || 'Untitled node'
+      return {
+        subject: `Node: ${label}`,
+        text: this.buildCodingPrompt(this.currentNode)
+      }
+    },
+    buildCodingPrompt (node) {
+      const outline = this.buildFeatureOutline(node)
+
+      return `You are a senior software engineer. Build an application from the feature tree below.
+
+Treat the tree as the source of truth for the product requirements. Each node is a feature, and child nodes refine or constrain the parent feature. Preserve the intent of the hierarchy when designing the app.
+
+Project key: ${this.storageKey}
+Selected node: ${node.text || 'Untitled node'}
+
+Your task:
+- Infer the application's core user workflow from the selected node and its child branches.
+- Implement the smallest complete app that satisfies the tree.
+- Prefer working software over placeholder screens.
+- Use the existing project stack unless instructed otherwise.
+- Keep code modular and readable.
+- Add focused tests for core behavior where practical.
+- Do not invent major product features outside the tree, except small glue behavior needed to make the app usable.
+
+Feature tree:
+
+${outline || '(No feature nodes yet.)'}
+
+Implementation requirements:
+- Build the actual usable application, not a landing page.
+- Make the first screen the main user workflow.
+- Persist user data locally unless the tree explicitly requires a backend.
+- Include empty states, validation, deletion/undo behavior where implied by the tree.
+- Make navigation match the tree's hierarchy when useful, but do not expose the tree literally unless that is the app's purpose.
+- Keep the UI compact, clear, and responsive.
+- After implementation, run lint/build/tests and report what passed or failed.
+
+Before coding:
+- Summarize the inferred product in 5-10 bullets.
+- Identify ambiguous nodes and make conservative assumptions.
+- Then implement without waiting for more clarification unless a requirement is impossible.`
+    },
+    buildFeatureOutline (rootNode) {
+      const lines = []
+      const walk = (node, depth) => {
+        const text = node.text && node.text.trim()
+        if (text) lines.push(`${'  '.repeat(depth)}- ${text}`)
+
+        this.tree.children(node).forEach(child => {
+          walk(child, text ? depth + 1 : depth)
+        })
+      }
+
+      walk(rootNode, 0)
+
+      return lines.join('\n')
     }
   }
 }
@@ -692,6 +758,11 @@ class Storage {
   .siblings-header .ui.header {
     flex: 1 1 auto;
     margin: 0;
+  }
+  .siblings-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex: 0 0 auto;
   }
   .siblings-content {
     flex: 1 1 auto;

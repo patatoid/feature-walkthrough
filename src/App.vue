@@ -53,9 +53,7 @@
           <button class="ui icon button" @click="exportProject(projectKey)">
             <i class="download icon"></i>
           </button>
-          <button class="ui icon button" @click="showProjectPrompt(projectKey)">
-            <i class="terminal icon"></i>
-          </button>
+          <PromptButton :prompt="() => projectPrompt(projectKey)" />
           <button class="ui red icon button" @click="deleteProject(projectKey)">
             <i class="trash icon"></i>
           </button>
@@ -76,33 +74,6 @@
         accept=".jwt,application/jwt,text/plain"
         @change="importProject"
       >
-
-      <div class="prompt-overlay" v-if="promptPopoverOpen" @click.self="closeProjectPrompt()">
-        <div class="ui segment prompt-popover">
-          <div class="prompt-header">
-            <h2 class="ui header">Coding prompt</h2>
-            <button class="ui icon button" type="button" @click="closeProjectPrompt()">
-              <i class="close icon"></i>
-            </button>
-          </div>
-          <p class="prompt-project">Project: {{ promptProjectKey }}</p>
-          <textarea
-            ref="promptText"
-            class="prompt-textarea"
-            readonly
-            :value="projectPrompt"
-          ></textarea>
-          <div class="prompt-actions">
-            <span class="prompt-copy-status" v-if="promptCopyStatus" role="status" aria-live="polite">
-              {{ promptCopyStatus }}
-            </span>
-            <button class="ui blue icon labeled button" type="button" @click="copyProjectPrompt()">
-              <i class="copy icon"></i>
-              Copy
-            </button>
-          </div>
-        </div>
-      </div>
 
       <div class="ui right aligned large basic home-help segment">
         <h2 class="header">How to use Feature walkthrough</h2>
@@ -142,6 +113,7 @@
 
 <script>
 import FeatureWalkthrough from './components/FeatureWalkthrough.vue'
+import PromptButton from './components/PromptButton.vue'
 import { SignJWT, jwtVerify } from 'jose'
 import borutaServerSeed from './seeds/boruta-server.jwt'
 
@@ -156,7 +128,8 @@ const ACTIVITY_EVENTS = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'
 export default {
   name: 'App',
   components: {
-    FeatureWalkthrough
+    FeatureWalkthrough,
+    PromptButton
   },
   data () {
     return {
@@ -165,12 +138,7 @@ export default {
       newProjectKey: '',
       openaiApiKeyInput: '',
       openaiApiKey: sessionStorage.getItem(OPENAI_API_KEY_STORAGE_KEY) || '',
-      inactivityTimer: null,
-      promptPopoverOpen: false,
-      promptProjectKey: '',
-      projectPrompt: '',
-      promptCopyStatus: '',
-      promptCopyStatusTimer: null
+      inactivityTimer: null
     }
   },
   computed: {
@@ -197,7 +165,6 @@ export default {
       window.removeEventListener(eventName, this.resetInactivityTimer)
     })
     this.clearInactivityTimer()
-    this.clearPromptCopyStatus()
   },
   methods: {
     loadProjects () {
@@ -319,57 +286,11 @@ export default {
       link.click()
       URL.revokeObjectURL(link.href)
     },
-    async showProjectPrompt (projectKey) {
+    async projectPrompt (projectKey) {
       const nodes = await this.loadProjectNodes(projectKey)
-      this.clearPromptCopyStatus()
-      this.promptProjectKey = projectKey
-      this.projectPrompt = this.buildCodingPrompt(projectKey, nodes)
-      this.promptPopoverOpen = true
-      this.$nextTick(() => {
-        if (this.$refs.promptText) this.$refs.promptText.focus()
-      })
-    },
-    closeProjectPrompt () {
-      this.promptPopoverOpen = false
-      this.promptProjectKey = ''
-      this.projectPrompt = ''
-      this.clearPromptCopyStatus()
-    },
-    async copyProjectPrompt () {
-      try {
-        if (navigator.clipboard) {
-          await navigator.clipboard.writeText(this.projectPrompt)
-          this.showPromptCopyStatus()
-          return
-        }
-      } catch (error) {
-        // Fall back to the selected textarea copy path below.
-      }
-
-      if (!this.$refs.promptText) return
-
-      this.$refs.promptText.select()
-      if (document.execCommand('copy')) {
-        this.showPromptCopyStatus()
-      }
-    },
-    showPromptCopyStatus () {
-      this.clearPromptCopyStatus()
-      this.promptCopyStatus = 'Copied to clipboard'
-      this.promptCopyStatusTimer = window.setTimeout(() => {
-        this.promptCopyStatus = ''
-        this.promptCopyStatusTimer = null
-      }, 2500)
-    },
-    clearPromptCopyStatus () {
-      if (this.promptCopyStatusTimer) {
-        window.clearTimeout(this.promptCopyStatusTimer)
-        this.promptCopyStatusTimer = null
-      }
-
-      if (this.promptCopyStatus) {
-        this.promptCopyStatus = ''
-        return
+      return {
+        subject: `Project: ${projectKey}`,
+        text: this.buildCodingPrompt(projectKey, nodes)
       }
     },
     async loadProjectNodes (projectKey) {
@@ -559,55 +480,5 @@ Before coding:
   }
   .project-import-input {
     display: none;
-  }
-  .prompt-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    background: rgba(0, 0, 0, 0.35);
-  }
-  .prompt-popover {
-    display: flex;
-    flex-direction: column;
-    width: min(900px, 100%);
-    max-height: calc(100vh - 2rem);
-  }
-  .prompt-header {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
-  }
-  .prompt-header .ui.header {
-    flex: 1 1 auto;
-    margin: 0;
-  }
-  .prompt-project {
-    color: #616161;
-    margin-bottom: 0.75rem;
-  }
-  .prompt-textarea {
-    width: 100%;
-    min-height: 45vh;
-    resize: vertical;
-    font-family: monospace;
-    font-size: 0.95rem;
-    line-height: 1.4;
-    white-space: pre;
-  }
-  .prompt-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    justify-content: flex-end;
-    margin-top: 1rem;
-  }
-  .prompt-copy-status {
-    color: #2185d0;
-    font-weight: 600;
   }
 </style>
