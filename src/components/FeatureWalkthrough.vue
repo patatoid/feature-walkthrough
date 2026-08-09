@@ -109,13 +109,22 @@
             <div
               class="ui sibling segment"
               v-for="node in currentSiblings"
-              :class="{ 'blue inverted': node === currentNode }"
+              :class="{ 'grey inverted': node === currentNode }"
               @click="goto(node)"
               :key="node.text"
             >
               {{ node.text || 'Untitled node' }}
             </div>
           </div>
+          <button
+            class="ui fluid blue labeled icon button new-sibling-button"
+            type="button"
+            :disabled="!currentNode.parent"
+            @click="continueSibling()"
+          >
+            <i class="plus icon"></i>
+            New node
+          </button>
         </div>
       </div>
     </div>
@@ -165,15 +174,22 @@ export default {
       return this.tree.children(this.currentNode)
     },
     currentSiblings () {
+      if (!this.currentNode) return []
       const siblings = this.tree.children(this.currentNode.parent)
       const currentIndex = siblings.indexOf(this.currentNode)
-      if (currentIndex <= 0) return siblings
 
-      return [
+      const currentSiblings = [
         this.currentNode,
-        ...siblings.slice(currentIndex + 1),
-        ...siblings.slice(0, currentIndex)
+        ...siblings.slice(currentIndex + 1, currentIndex ? siblings.length : siblings.length - 1),
+        ...siblings.slice(0, currentIndex ? currentIndex - 1 : 0)
       ]
+
+      const lastNode = siblings[currentIndex ? currentIndex - 1 : siblings.length - 1]
+      if (lastNode && siblings.length > 1) {
+        currentSiblings.unshift(lastNode)
+      }
+
+      return currentSiblings
     },
     currentAncestry () {
       const ancestry = []
@@ -233,7 +249,7 @@ export default {
     continueSibling () {
       if (!this.currentNode.parent || this.tree.isEmpty(this.currentNode)) return
 
-      this.currentNode = this.tree.appendRightFrom(this.currentNode.parent)
+      this.currentNode = this.tree.appendRightFromNode(this.currentNode.parent, this.currentNode)
       this.focusedChildIndex = null
       this.focusedCompletionIndex = null
       this.scrollChildListToTop()
@@ -343,7 +359,7 @@ export default {
         return
       }
 
-      this.down()
+      this.continueSibling()
     },
     clearKeyboardFocus () {
       this.focusedChildIndex = null
@@ -568,6 +584,13 @@ class Tree {
     return result
   }
 
+  appendRightFromNode (parent, node) {
+    const result = new Node(node.parent)
+    this.nodes.splice(this.nodes.indexOf(node) + 1, 0, result)
+
+    return result
+  }
+
   appendLeftFrom (node) {
     const result = new Node(node)
     this.nodes.unshift(result)
@@ -768,6 +791,10 @@ class Storage {
     flex: 1 1 auto;
     overflow-y: auto;
     padding-right: 0.25rem;
+  }
+  .new-sibling-button {
+    margin-top: 0.85rem!important;
+    flex: 0 0 auto;
   }
   .sibling.segment {
     cursor: pointer;
