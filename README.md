@@ -65,6 +65,7 @@ The app is configured for a GitHub Pages project site at:
 ```
 
 The deployment workflow is in `.github/workflows/deploy-pages.yml` and runs on pushes to `master` or manually through GitHub Actions.
+It installs the `wasm32-unknown-unknown` Rust target and rebuilds the phi module before compiling the Vue application.
 
 In the repository settings, configure Pages to use `GitHub Actions` as the source.
 
