@@ -11,6 +11,7 @@ It stores projects locally in the browser, lets you move through parent, sibling
 - Parent, sibling, and child navigation.
 - Autosave on textarea keyup.
 - Signed JWT export and import for project backup or transfer.
+- Local WebAssembly training and plotting of a sparse `phi_all` curve for each project.
 - Optional OpenAI suggestions using an API key stored in sessionStorage.
 - Session key cleanup on logout, tab unload, and 30 minutes of inactivity.
 - GitHub Pages deployment workflow.
@@ -42,6 +43,18 @@ Build for production:
 ```sh
 npm run build
 ```
+
+Rebuild the Rust WebAssembly module after changing `wasm/phi-walkthrough`:
+
+```sh
+rustup target add wasm32-unknown-unknown
+npm run build:wasm
+```
+
+The chart button on each project trains a sparse degree-one/degree-two curve in
+a browser worker, so larger projects do not freeze the page. Nodes are
+classified by their top-level branch and only the aggregate curve and training
+statistics are displayed; walkthrough text never leaves the browser.
 
 ## GitHub Pages
 

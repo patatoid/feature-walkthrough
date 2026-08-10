@@ -53,6 +53,7 @@
           <button class="ui icon button" @click="exportProject(projectKey)">
             <i class="download icon"></i>
           </button>
+          <PhiPlotButton :project-key="projectKey" :load-nodes="() => loadProjectNodes(projectKey)" />
           <PromptButton :prompt="() => projectPrompt(projectKey)" />
           <button class="ui red icon button" @click="deleteProject(projectKey)">
             <i class="trash icon"></i>
@@ -114,6 +115,7 @@
 <script>
 import FeatureWalkthrough from './components/FeatureWalkthrough.vue'
 import PromptButton from './components/PromptButton.vue'
+import PhiPlotButton from './components/PhiPlotButton.vue'
 import { SignJWT, jwtVerify } from 'jose'
 import borutaServerSeed from './seeds/boruta-server.jwt'
 
@@ -129,7 +131,8 @@ export default {
   name: 'App',
   components: {
     FeatureWalkthrough,
-    PromptButton
+    PromptButton,
+    PhiPlotButton
   },
   data () {
     return {
