@@ -88,7 +88,7 @@
         </div>
         <div class="ui left aligned blue segment">
           <h3>Move through the tree</h3>
-          <p>Use parent, sibling, and child controls to move through the feature tree (Tip: you can use the arrow keys). Continue creates a child feature from the current node.</p>
+          <p>Use parent, sibling, and child controls to move through the feature tree (Tip: you can use the arrow keys or ZQSD). Continue creates a child feature from the current node.</p>
         </div>
         <div class="ui left aligned blue segment">
           <h3>Use AI suggestions</h3>
