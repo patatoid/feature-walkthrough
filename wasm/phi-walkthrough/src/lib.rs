@@ -1,15 +1,17 @@
 //! Browser wrapper around the sparse curve learner in ../phi-chatbot.
 //!
-//! The input is UTF-8 TSV (`response<TAB>message`). Each response gets a
-//! one-vs-rest sparse classifier and the exported points are their aggregate
-//! `phi_all` curve, as in phi-chatbot's `curve` command.
+//! The input is UTF-8 TSV (`child response<TAB>root<RS>...<RS>parent`). Each
+//! response gets a sparse classifier over its weighted ancestry contexts and
+//! the exported points are their aggregate `phi_all` curve, as in
+//! phi-chatbot's `curve` command.
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 const CONTROL_POINT_COUNT: usize = 8;
 const LEARNING_RATE: f64 = 0.08;
-const MAX_EPOCHS: usize = 500;
+const MAX_EPOCHS: usize = 2000;
 const EPSILON: f64 = 0.02;
+const CONTEXT_DECAY: f64 = 0.65;
 
 static mut RESULT_POINTER: *mut u8 = std::ptr::null_mut();
 static mut RESULT_LENGTH: usize = 0;
@@ -17,7 +19,13 @@ static mut RESULT_LENGTH: usize = 0;
 #[derive(Clone, Debug)]
 struct Example {
     response: String,
-    features: Vec<usize>,
+    features: Vec<WeightedFeature>,
+}
+
+#[derive(Clone, Debug)]
+struct WeightedFeature {
+    index: usize,
+    value: f64,
 }
 
 #[derive(Debug)]
@@ -127,7 +135,12 @@ fn train(input: &str) -> Result<String, &'static str> {
 
     let vocabulary = rows
         .iter()
-        .flat_map(|(_, message)| tokenize(message))
+        .flat_map(|(_, message)| {
+            message
+                .split('\u{1e}')
+                .flat_map(tokenize)
+                .collect::<Vec<_>>()
+        })
         .collect::<BTreeSet<_>>()
         .into_iter()
         .enumerate()
@@ -148,12 +161,7 @@ fn train(input: &str) -> Result<String, &'static str> {
         .iter()
         .map(|(response, message)| Example {
             response: (*response).to_owned(),
-            features: tokenize(message)
-                .into_iter()
-                .filter_map(|token| vocabulary.get(&token).copied())
-                .collect::<BTreeSet<_>>()
-                .into_iter()
-                .collect(),
+            features: weighted_context_features(message, &vocabulary),
         })
         .collect::<Vec<_>>();
 
@@ -162,7 +170,11 @@ fn train(input: &str) -> Result<String, &'static str> {
 
     for positive_response in &responses {
         let mut curves = HashMap::<Vec<usize>, SparseCurve>::new();
-        let terms = examples
+        let positive_examples = examples
+            .iter()
+            .filter(|example| &example.response == positive_response)
+            .collect::<Vec<_>>();
+        let terms = positive_examples
             .iter()
             .map(|example| active_terms(&example.features))
             .collect::<Vec<_>>();
@@ -170,7 +182,7 @@ fn train(input: &str) -> Result<String, &'static str> {
         for epoch in 0..MAX_EPOCHS {
             let mut max_error = 0.0_f64;
 
-            for (example, active_terms) in examples.iter().zip(&terms) {
+            for active_terms in &terms {
                 let prediction = active_terms
                     .iter()
                     .map(|term| {
@@ -180,12 +192,7 @@ fn train(input: &str) -> Result<String, &'static str> {
                             .unwrap_or(0.0)
                     })
                     .sum::<f64>();
-                let target = if &example.response == positive_response {
-                    1.0
-                } else {
-                    0.0
-                };
-                let error = target - prediction;
+                let error = 1.0 - prediction;
                 max_error = max_error.max(error.abs());
                 // Browser walkthrough paths can activate hundreds of terms.
                 // Normalize the shared correction so their summed update has
@@ -227,20 +234,47 @@ fn train(input: &str) -> Result<String, &'static str> {
     ))
 }
 
-fn active_terms(features: &[usize]) -> Vec<SparseTerm> {
+fn weighted_context_features(
+    message: &str,
+    vocabulary: &BTreeMap<String, usize>,
+) -> Vec<WeightedFeature> {
+    let levels = message.split('\u{1e}').collect::<Vec<_>>();
+    let mut features = BTreeMap::<usize, f64>::new();
+
+    for (level_index, level) in levels.iter().enumerate() {
+        let distance_from_parent = levels.len() - level_index - 1;
+        let weight = CONTEXT_DECAY.powi(distance_from_parent as i32);
+
+        for token in tokenize(level) {
+            if let Some(index) = vocabulary.get(&token) {
+                features
+                    .entry(*index)
+                    .and_modify(|current| *current = current.max(weight))
+                    .or_insert(weight);
+            }
+        }
+    }
+
+    features
+        .into_iter()
+        .map(|(index, value)| WeightedFeature { index, value })
+        .collect()
+}
+
+fn active_terms(features: &[WeightedFeature]) -> Vec<SparseTerm> {
     let mut terms = features
         .iter()
         .map(|feature| SparseTerm {
-            key: vec![*feature],
-            value: 0.5,
+            key: vec![feature.index],
+            value: feature.value,
         })
         .collect::<Vec<_>>();
 
     for left in 0..features.len() {
         for right in (left + 1)..features.len() {
             terms.push(SparseTerm {
-                key: vec![features[left], features[right]],
-                value: 1.0,
+                key: vec![features[left].index, features[right].index],
+                value: features[left].value * features[right].value,
             });
         }
     }
@@ -262,13 +296,28 @@ mod tests {
 
     #[test]
     fn trains_an_aggregate_phi_curve() {
-        let report = train("accounts\tcreate user\naccounts\tdelete user\nbilling\tcreate invoice")
-            .expect("training should succeed");
+        let report = train(
+            "create user\tproduct\u{1e}accounts\ndelete user\tproduct\u{1e}accounts\ncreate invoice\tproduct\u{1e}billing",
+        )
+        .expect("training should succeed");
 
         assert!(report.contains("\"examples\":3"));
-        assert!(report.contains("\"classes\":2"));
+        assert!(report.contains("\"classes\":3"));
         assert!(report.contains("\"points\":["));
         assert!(!report.contains("NaN"));
+    }
+
+    #[test]
+    fn weights_the_parent_more_than_the_root() {
+        let vocabulary = ["accounts".to_string(), "product".to_string()]
+            .into_iter()
+            .enumerate()
+            .map(|(index, token)| (token, index))
+            .collect();
+        let features = weighted_context_features("product\u{1e}accounts", &vocabulary);
+
+        assert_eq!(features[0].value, 1.0);
+        assert_eq!(features[1].value, CONTEXT_DECAY);
     }
 
     #[test]

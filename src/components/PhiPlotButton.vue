@@ -29,7 +29,7 @@
         <div class="ui negative message" role="alert" v-else-if="error">{{ error }}</div>
         <template v-else-if="report">
           <div class="phi-stats">
-            <span><strong>{{ report.examples }}</strong> nodes</span>
+            <span><strong>{{ report.examples }}</strong> parent-child examples</span>
             <span><strong>{{ report.features }}</strong> word features</span>
             <span><strong>{{ report.classes }}</strong> response classes</span>
             <span><strong>{{ report.epochs }}</strong> epochs</span>
@@ -46,7 +46,7 @@
             <text x="54" y="296" text-anchor="end">{{ minLabel }}</text>
             <text x="380" y="336" text-anchor="middle">normalized input x</text>
           </svg>
-          <p class="phi-note">Trained locally in WebAssembly. The curve aggregates sparse degree-one and degree-two terms across the walkthrough’s top-level branches.</p>
+          <p class="phi-note">Trained locally in WebAssembly. Each child is a response to its parent, with ancestry context decaying by 0.65 toward the root.</p>
         </template>
       </section>
     </div>
@@ -115,7 +115,7 @@ export default {
 
       try {
         const nodes = await this.loadNodes()
-        this.report = await trainWalkthroughPhi(nodes, this.projectKey)
+        this.report = await trainWalkthroughPhi(nodes)
       } catch (error) {
         this.error = error.message || 'Unable to train this walkthrough.'
       } finally {

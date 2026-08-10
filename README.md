@@ -52,8 +52,9 @@ npm run build:wasm
 ```
 
 The chart button on each project trains a sparse degree-one/degree-two curve in
-a browser worker, so larger projects do not freeze the page. Nodes are
-classified by their top-level branch and only the aggregate curve and training
+a browser worker, so larger projects do not freeze the page. Each child node is
+learned as a response to its parent, while the path to the root supplies context
+with a `0.65` decay per ancestor. Only the aggregate curve and training
 statistics are displayed; walkthrough text never leaves the browser.
 
 ## GitHub Pages

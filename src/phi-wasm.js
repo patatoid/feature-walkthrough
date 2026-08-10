@@ -34,12 +34,10 @@ function parentOf (nodes, node) {
   return nodes.find(candidate => candidate.text === node.parent.text) || null
 }
 
-function trainingRows (nodes, projectKey) {
-  const root = nodes.find(node => node.parent === null) || nodes[0]
-
-  return nodes.map(node => {
+function trainingRows (nodes) {
+  return nodes.filter(node => parentOf(nodes, node)).map(node => {
     const path = []
-    let current = node
+    let current = parentOf(nodes, node)
     const seen = new Set()
 
     while (current && !seen.has(current)) {
@@ -48,22 +46,15 @@ function trainingRows (nodes, projectKey) {
       current = parentOf(nodes, current)
     }
 
-    let branch = node
-    let parent = parentOf(nodes, branch)
-    while (parent && parent !== root) {
-      branch = parent
-      parent = parentOf(nodes, branch)
-    }
-
-    const response = cleanField(branch.text) || cleanField(root && root.text) || cleanField(projectKey) || 'walkthrough'
-    // The node and its direct parent preserve local tree context without
-    // producing an unbounded number of pairwise terms on deep walkthroughs.
-    return `${response}\t${path.slice(-2).join(' ')}`
+    const response = cleanField(node.text)
+    // Rust treats each separator-delimited item as one ancestry level and
+    // applies increasing weight as the path approaches the direct parent.
+    return `${response}\t${path.join('\u001e')}`
   }).filter(row => row.split('\t')[1])
 }
 
-export async function trainWalkthroughPhi (nodes, projectKey) {
-  const input = trainingRows(nodes, projectKey).join('\n')
+export async function trainWalkthroughPhi (nodes) {
+  const input = trainingRows(nodes).join('\n')
 
   if (!input.length) throw new Error('The walkthrough has no feature text to train.')
 
