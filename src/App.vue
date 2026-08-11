@@ -107,8 +107,11 @@
     <footer class="app-footer">
       <span>Feature walkthrough</span>
       <span>patatoid</span>
+      <a ref="ticTacToeLink" href="#" @click.prevent="openTicTacToe()">tic-tac-toe</a>
       <a href="https://github.com/patatoid/feature-walkthrough" target="_blank" rel="noopener noreferrer">source code</a>
     </footer>
+
+    <TicTacToeGame v-if="ticTacToeOpen" :openai-api-key="openaiApiKey" @close="closeTicTacToe()" />
   </div>
 </template>
 
@@ -116,6 +119,7 @@
 import FeatureWalkthrough from './components/FeatureWalkthrough.vue'
 import PromptButton from './components/PromptButton.vue'
 import PhiPlotButton from './components/PhiPlotButton.vue'
+import TicTacToeGame from './components/TicTacToeGame.vue'
 import { SignJWT, jwtVerify } from 'jose'
 import borutaServerSeed from './seeds/boruta-server.jwt'
 
@@ -132,7 +136,8 @@ export default {
   components: {
     FeatureWalkthrough,
     PromptButton,
-    PhiPlotButton
+    PhiPlotButton,
+    TicTacToeGame
   },
   data () {
     return {
@@ -141,7 +146,8 @@ export default {
       newProjectKey: '',
       openaiApiKeyInput: '',
       openaiApiKey: sessionStorage.getItem(OPENAI_API_KEY_STORAGE_KEY) || '',
-      inactivityTimer: null
+      inactivityTimer: null,
+      ticTacToeOpen: false
     }
   },
   computed: {
@@ -397,6 +403,13 @@ Before coding:
     },
     projectSecret (projectKey) {
       return new TextEncoder().encode(projectKey)
+    },
+    openTicTacToe () {
+      this.ticTacToeOpen = true
+    },
+    closeTicTacToe () {
+      this.ticTacToeOpen = false
+      this.$nextTick(() => this.$refs.ticTacToeLink.focus())
     },
     goHome () {
       this.selectedProjectKey = null

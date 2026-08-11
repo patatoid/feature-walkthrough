@@ -24,3 +24,4 @@ pnpm-debug.log*
 *.sw?
 
 /back/data.txt
+/public/tic-tac-toe.phi.bin

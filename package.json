@@ -8,6 +8,9 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "build:wasm": "cargo build --manifest-path wasm/phi-walkthrough/Cargo.toml --target wasm32-unknown-unknown --release && cp wasm/phi-walkthrough/target/wasm32-unknown-unknown/release/phi_walkthrough_wasm.wasm public/phi_walkthrough_bg.wasm",
+    "build:tic-tac-toe-model": "npm run build:wasm && node scripts/build-tic-tac-toe-model.js",
+    "train:tic-tac-toe": "node scripts/train-tic-tac-toe.js",
+    "test:tic-tac-toe": "node --test scripts/train-tic-tac-toe.test.js scripts/tic-tac-toe-phi.test.js",
     "test:wasm": "cargo test --manifest-path wasm/phi-walkthrough/Cargo.toml",
     "lint": "vue-cli-service lint"
   },
